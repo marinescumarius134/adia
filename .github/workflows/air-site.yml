@@ -81,5 +81,4 @@ jobs:
           BREVO_SENDER_EMAIL: ${{ vars.BREVO_SENDER_EMAIL }}
           BREVO_SENDER_NAME: ${{ vars.BREVO_SENDER_NAME }}
           BREVO_LIST_SMOG_BUCURESTI: ${{ vars.BREVO_LIST_SMOG_BUCURESTI }}
-          BREVO_LIST_SMOG_BUZAU: ${{ vars.BREVO_LIST_SMOG_BUZAU }}
           SITE_URL: ${{ vars.SITE_URL }}

@@ -9,7 +9,7 @@ uses the same estimate as the air page for the city centre, so the email and the
 
 Environment (GitHub > Settings > Secrets and variables > Actions):
     BREVO_API_KEY, BREVO_SENDER_EMAIL, BREVO_SENDER_NAME (optional, default "Adia"),
-    BREVO_LIST_SMOG_BUCURESTI, BREVO_LIST_SMOG_BUZAU, SITE_URL
+    BREVO_LIST_SMOG_BUCURESTI, SITE_URL
 Without BREVO_API_KEY it prints what it would do and stops. Standard library only.
 """
 
@@ -32,7 +32,6 @@ MIN_SMOG_HOURS = 2           # one smoggy hour in the forecast isn't worth an em
 STALE_H = 4                  # same as the air page: older data, no alert
 CITIES = {  # area in air.json: list variable, centre (the air page's spot), names
     "bucharest": {"key": "bucuresti", "env": "BREVO_LIST_SMOG_BUCURESTI", "lat": 44.4268, "lon": 26.1025, "ro": "București", "en": "Bucharest"},
-    "buzau": {"key": "buzau", "env": "BREVO_LIST_SMOG_BUZAU", "lat": 45.15, "lon": 26.82, "ro": "Buzău", "en": "Buzău"},
 }
 NAME = {"pm25": "PM2.5", "pm10": "PM10"}
 
@@ -40,21 +39,21 @@ TXT = {
     "ro": {
         "nightBad": "Smog probabil la noapte, între {a} și {b}.", "nightBadAll": "Smog probabil toată noaptea.",
         "bestAt": "Cel mai bun moment să aerisești: {a}–{b}.", "anyTime": "Poți aerisi oricând până la 22:00.",
-        "shortAt": "Dacă aerisești, fă-o scurt, pe la {a}.", "noAir": "Și seara e mai bine să ții geamul închis.",
+        "shortAt": "Dacă aerisești, fă-o scurt, în jurul orei {a}.", "noAir": "Și seara e mai bine să ții geamul închis.",
         "shutNight": "Noaptea, ține geamul închis.", "shutAll": "Ține geamul închis și seara, și noaptea.",
         "now": "Acum, în {city}: {p} {v} µg/m³, măsurat între {a} și {b}.",
-        "go": "Vezi aerul de lângă tine", "small": "Prognoza poate greși, mai ales la câteva ore distanță. Estimare din stațiile oficiale (ANPM, prin Agenția Europeană de Mediu) și prognoza SILAM (Institutul Meteorologic Finlandez). Nu sunt sfaturi medicale.",
+        "go": "Vezi aerul de lângă tine", "small": "Prognoza poate greși, mai ales pentru orele mai îndepărtate. Estimare din stațiile oficiale (ANPM, prin Agenția Europeană de Mediu) și prognoza SILAM (Institutul Meteorologic Finlandez). Nu sunt sfaturi medicale.",
         "why": "Primești acest e-mail pentru că te-ai abonat la alertele de smog Adia pentru {city}.", "unsub": "Dezabonează-te",
         "subject": "Smog probabil la noapte în {city} ({a}–{b})", "subjectAll": "Smog probabil toată noaptea în {city}",
     },
     "en": {
         "nightBad": "Smog likely tonight, between {a} and {b}.", "nightBadAll": "Smog likely all night.",
         "bestAt": "Best time to air the room: {a}–{b}.", "anyTime": "You can air the room any time until 22:00.",
-        "shortAt": "If you air the room, keep it short, around {a}.", "noAir": "Better to keep the window shut this evening too.",
-        "shutNight": "At night, keep the window shut.", "shutAll": "Keep the window shut this evening and tonight.",
+        "shortAt": "If you air the room, keep it brief, around {a}.", "noAir": "Better to keep the window shut this evening too.",
+        "shutNight": "Keep the window shut overnight.", "shutAll": "Keep the window shut this evening and tonight.",
         "now": "Now in {city}: {p} {v} µg/m³, measured between {a} and {b}.",
-        "go": "See the air near you", "small": "The forecast can be wrong, especially a few hours ahead. Estimated from the official stations (ANPM, through the European Environment Agency) and the SILAM forecast (Finnish Meteorological Institute). Not medical advice.",
-        "why": "You get this email because you subscribed to Adia smog alerts for {city}.", "unsub": "Unsubscribe",
+        "go": "See the air near you", "small": "Forecasts can be off, especially further ahead. Estimated from the official stations (ANPM, through the European Environment Agency) and the SILAM forecast (Finnish Meteorological Institute). Not medical advice.",
+        "why": "You're receiving this email because you signed up for Adia smog alerts for {city}.", "unsub": "Unsubscribe",
     },
 }
 
@@ -194,7 +193,7 @@ def email_html(city: dict, P: str, ro: dict, en: dict, site: str) -> str:
     def block(x: dict, lang: str) -> str:
         X = TXT[lang]
         v = f"{x['now_v']:.0f}"
-        link = f"{site}/aer.html?src=alerta" + ("#en" if lang == "en" else "")
+        link = f"{site}/aer.html?src=alerta#{lang}"   # the site opens in English unless the link says #ro
         return (
             f'<h1 style="font:700 22px/1.3 Arial,sans-serif;margin:0 0 10px">{e(x["big"])}</h1>'
             f'<p style="font:600 17px/1.45 Arial,sans-serif;margin:0 0 12px">{e(x["sub"])}</p>'

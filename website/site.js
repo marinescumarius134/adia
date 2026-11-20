@@ -68,5 +68,32 @@ window.AC = (() => {
   /* after the double opt-in link: Brevo sends people to ...?confirmat=1 */
   const confirmed = q.get("confirmat") === "1";
 
-  return { store, esc, variant, source, carry, stamp, post, live, emailOk, siteLine, confirmed };
+  /* ---- CO₂ scale, the same three levels everywhere (chart, calculator, device): good under 1,000 ppm,
+     stale 1,000–1,500, very stale above 1,500. Outdoor air is about 420 ppm. ---- */
+  const CO2 = {
+    ro: { names: ["Aer bun", "Aer închis", "Foarte închis"], ranges: ["sub 1.000", "1.000–1.500", "peste 1.500"],
+          note: "CO₂ se măsoară în ppm (părți per milion). Pentru comparație, aerul de afară are în jur de 420 ppm.",
+          aria: (v, n) => `Scara CO₂: aer bun sub 1.000 ppm, aer închis între 1.000 și 1.500 ppm, foarte închis peste 1.500 ppm. Valoarea de aici: ${v} ppm, ${n}.` },
+    en: { names: ["Good", "Stale", "Very stale"], ranges: ["under 1,000", "1,000–1,500", "over 1,500"],
+          note: "CO₂ is measured in ppm (parts per million). For comparison, outdoor air is around 420 ppm.",
+          aria: (v, n) => `CO₂ scale: good under 1,000 ppm, stale from 1,000 to 1,500 ppm, very stale over 1,500 ppm. This value: ${v} ppm, ${n}.` },
+  };
+  const co2Level = ppm => (ppm < 1000 ? 0 : ppm <= 1500 ? 1 : 2);
+  function co2Scale(box, ppm, lang) {
+    if (!box) return;
+    const L = CO2[lang === "en" ? "en" : "ro"], i = co2Level(ppm);
+    // three equal parts; the marker sits inside its part (the top part runs to 3,000 ppm and stops there)
+    const part = i === 0 ? Math.max(0, ppm - 400) / 600 : i === 1 ? (ppm - 1000) / 500 : Math.min(1, (ppm - 1500) / 1500);
+    const pos = ((i + Math.min(1, part)) / 3) * 100;
+    const v = Math.round(ppm).toLocaleString(lang === "en" ? "en-GB" : "ro-RO", { useGrouping: "always" });
+    box.innerHTML =
+      `<div class="cs-bar">${[0, 1, 2].map(k => `<span class="cs-seg cs-${k}${k === i ? " on" : ""}"></span>`).join("")}<span class="cs-mark"></span></div>` +
+      `<div class="cs-legend">${[0, 1, 2].map(k => `<span class="${k === i ? "on" : ""}"><b>${L.names[k]}</b><small>${L.ranges[k]}</small></span>`).join("")}</div>` +
+      `<p class="cs-note">${L.note}</p>`;
+    box.querySelector(".cs-mark").style.left = pos.toFixed(1) + "%";
+    box.setAttribute("role", "img");
+    box.setAttribute("aria-label", L.aria(v, L.names[i].toLowerCase()));
+  }
+
+  return { store, esc, variant, source, carry, stamp, post, live, emailOk, siteLine, confirmed, co2Level, co2Scale };
 })();

@@ -1,6 +1,6 @@
 <title>Aerul de lângă tine</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Aerul de afară de lângă tine, acum și la noapte: când să aerisești și când să ții geamul închis. București și Buzău.">
+<meta name="description" content="Aerul de afară de lângă tine, acum și la noapte: când să aerisești și când să ții geamul închis. Pentru București.">
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
 /* Layout: one narrow app column. The action first (one 3-step scale: good to air / air briefly / keep it shut), then tonight, the chart, the nearest stations, the bedroom calculator that leads to Adia, and how it is calculated. */
@@ -114,6 +114,23 @@ a { color: var(--accent); }
 .result { display: grid; gap: 2px; }
 .result b { font: 800 clamp(2rem, 6vw, 2.6rem) var(--font-display); letter-spacing: -0.02em; }
 .result span { color: var(--fg); }
+/* CO₂ scale (site.js): three levels, labels always visible, the marker shows where this value sits */
+.co2scale { min-width: 0; }
+.cs-bar { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; height: 10px; margin: 6px 0 0; }
+.cs-seg { opacity: 0.35; }
+.cs-seg.on { opacity: 1; }
+.cs-0 { background: var(--good); border-radius: 5px 0 0 5px; }
+.cs-1 { background: var(--warn); }
+.cs-2 { background: var(--bad, var(--smog)); border-radius: 0 5px 5px 0; }
+.cs-mark { position: absolute; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--fg); border: 4px solid var(--panel); box-shadow: 0 0 0 1px var(--line-strong); }
+.cs-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 8px; margin-top: 8px; }
+.cs-legend span { display: grid; align-content: start; gap: 1px; font-size: 0.85rem; line-height: 1.3; color: var(--fg-2); min-width: 0; }
+.cs-legend span.on { color: var(--fg); }
+.cs-legend b { font-weight: 500; }
+.cs-legend span.on b { font-weight: 700; }
+.cs-legend small { font: 0.75rem var(--font-mono); color: var(--muted); white-space: nowrap; }
+@media (max-width: 360px) { .cs-legend small { font-size: 0.68rem; } }
+.cs-note { margin: 10px 0 0; font-size: 0.85rem; color: var(--fg-2); }
 .btn { font: 600 1rem var(--font-body); color: var(--on-accent); background: var(--accent); border: 0; border-radius: 10px; padding: 13px 18px; text-decoration: none; display: inline-block; justify-self: start; }
 .note { font-size: 0.95rem; color: var(--fg-2); }
 .msg { padding: 14px 16px; border-radius: 12px; background: var(--warn-bg); border: 1px solid var(--warn); }
@@ -172,21 +189,19 @@ footer { border-top: 1px solid var(--line); padding-block: 22px 36px; display: g
     <div class="periods" id="periods"></div>
     <p class="big" id="t-big"></p>
     <p class="sub" id="t-sub"></p>
-    <p class="small" data-i18n="fcNote">Prognoza poate greși, mai ales la câteva ore distanță. Uită-te din nou seara.</p>
+    <p class="small" data-i18n="fcNote">Prognoza poate greși, mai ales pentru orele mai îndepărtate. Mai verifică o dată seara.</p>
   </section>
 
   <section class="card alert" aria-labelledby="alert-h">
-    <h2 id="alert-h" data-i18n="alertTitle">Vrei un e-mail în serile cu smog?</h2>
-    <p class="note" data-i18n="alertSub">Îl trimitem seara, în jur de ora 18, doar când prognoza arată smog la noapte. Cel mult unul pe zi.</p>
+    <h2 id="alert-h" data-i18n="alertTitle">Vrei un e-mail când se anunță smog la noapte?</h2>
+    <p class="note" data-i18n="alertSub">Îl trimitem seara, de obicei în jurul orei 18, doar când prognoza arată smog pentru noaptea care urmează. Cel mult unul pe zi.</p>
     <form id="alert-form" name="alerta" method="POST" data-netlify="true" netlify-honeypot="bot-field" novalidate>
       <input type="hidden" name="form-name" value="alerta">
       <input type="hidden" name="varianta"><input type="hidden" name="sursa"><input type="hidden" name="limba"><input type="hidden" name="id">
       <p class="hp" aria-hidden="true"><label>Nu completa / leave empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
       <div class="row">
-        <label class="vh" for="a-email" data-i18n="emailLabel">Adresa de email</label>
+        <label class="vh" for="a-email" data-i18n="emailLabel">Adresa de e-mail</label>
         <input type="email" id="a-email" name="email" autocomplete="email" placeholder="nume@exemplu.ro" required>
-        <label class="vh" for="a-oras" data-i18n="cityLabel">Orașul</label>
-        <select id="a-oras" name="oras"><option value="bucuresti">București</option><option value="buzau">Buzău</option></select>
         <button class="btn" type="submit" id="a-submit" data-i18n="alertSubmit">Trimite-mi alertele</button>
       </div>
       <label class="check" for="a-lista"><input type="checkbox" id="a-lista" name="lista" value="da"><span data-i18n="alertAlso">Anunță-mă și când apare Adia</span></label>
@@ -215,14 +230,15 @@ footer { border-top: 1px solid var(--line); padding-block: 22px 36px; display: g
       <div class="opt"><span id="o-door" data-i18n="optDoor">Ușa camerei noaptea</span><div class="seg" role="group" aria-labelledby="o-door" data-k="door"><button type="button" data-v="shut" aria-pressed="true" data-i18n="doorShut">închisă</button><button type="button" data-v="open" aria-pressed="false" data-i18n="doorOpen">deschisă</button></div></div>
     </div>
     <div class="result" aria-live="polite"><b class="num" id="co2">≈ 2.400 ppm</b><span id="co2-say"></span></div>
+    <div class="co2scale" id="co2-scale"></div>
     <p class="note" data-i18n="bedNote">Calcul estimativ pentru 8 ore de somn cu geamul închis, nu o măsurătoare. Fiecare cameră e diferită; în camerele mai etanșe valoarea e mai mare.</p>
-    <a class="btn" href="index.html#join" data-i18n="bedCta">Adia îți arată cât CO₂ ai de fapt. Anunță-mă când apare</a>
+    <a class="btn" href="index.html#join" data-i18n="bedCta">Adia îți arată cât CO₂ e de fapt în cameră. Anunță-mă când apare</a>
   </section>
 
   <details class="method">
     <summary data-i18n="mTitle">Cum calculăm</summary>
     <ul id="method"></ul>
-    <p class="more"><a href="metoda.html" data-i18n="mMore">Toate detaliile și cifrele de precizie →</a></p>
+    <p class="more"><a href="metoda.html" data-i18n="mMore">Toate detaliile și cifrele despre precizie →</a></p>
   </details>
 </main>
 
@@ -245,7 +261,6 @@ const SPOTS = [
   { key: "s4", ro: "București, Sectorul 4", en: "Bucharest, Sector 4", lat: 44.375, lon: 26.115 },
   { key: "s5", ro: "București, Sectorul 5", en: "Bucharest, Sector 5", lat: 44.4, lon: 26.06 },
   { key: "s6", ro: "București, Sectorul 6", en: "Bucharest, Sector 6", lat: 44.435, lon: 26.025 },
-  { key: "bz", ro: "Buzău", en: "Buzău", lat: 45.15, lon: 26.82 },
 ];
 const EAQI_RO = { "Good": "Bun", "Fair": "Acceptabil", "Moderate": "Moderat", "Poor": "Rău", "Very poor": "Foarte rău", "Extremely poor": "Extrem de rău" };
 const NAME = { pm25: "PM2.5", pm10: "PM10" };
@@ -262,61 +277,61 @@ const T = {
     bedLabel: "Înăuntru", bedTitle: "Aerul de afară e doar jumătate din poveste. Ce respiri în dormitor?",
     optPeople: "Câți dormiți în cameră", optRoom: "Mărimea camerei", optDoor: "Ușa camerei noaptea", doorShut: "închisă", doorOpen: "deschisă",
     bedNote: "Calcul estimativ pentru 8 ore de somn cu geamul închis, nu o măsurătoare. Fiecare cameră e diferită; în camerele mai etanșe valoarea e mai mare.",
-    bedCta: "Adia îți arată cât CO₂ ai de fapt. Anunță-mă când apare",
-    fcNote: "Prognoza poate greși, mai ales la câteva ore distanță. Uită-te din nou seara.",
+    bedCta: "Adia îți arată cât CO₂ e de fapt în cameră. Anunță-mă când apare",
+    fcNote: "Prognoza poate greși, mai ales pentru orele mai îndepărtate. Mai verifică o dată seara.",
     credit: 'Date: stațiile Rețelei Naționale de Monitorizare a Calității Aerului (ANPM), prin <a href="https://www.eea.europa.eu/en/legal-notice" target="_blank" rel="noopener">Agenția Europeană de Mediu</a>, licență <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY</a>; valori provizorii, încă neverificate de rețea. Prognoză: Institutul Meteorologic Finlandez, modelul <a href="https://silam.fmi.fi/" target="_blank" rel="noopener">SILAM</a> (licență CC BY 4.0). Ajustăm prognoza după stațiile din zonă.',
     privacy: "Locația ta rămâne în telefon: pagina descarcă datele pentru tot orașul și alege singură punctul cel mai apropiat.",
     disclaimer: "Informații orientative despre aerul de afară. Nu sunt sfaturi medicale.",
     vGood: "Poți aerisi", vWarn: "Aerisește scurt", vBad: "Ține geamul închis", vNone: "Nu avem date recente", vOut: "Zonă neacoperită",
     noAreaData: "Nu avem măsurători recente pentru {a}. Revino mai târziu.",
-    dGood: "Aerul de afară e bun acum.", dWarn: "Aerul de afară e moderat poluat: 5 minute, apoi închide geamul.", dBad: "Afară e smog.",
+    dGood: "Aerul de afară e bun acum.", dWarn: "Aerul de afară e moderat poluat: aerisește 5 minute, apoi închide geamul.", dBad: "Afară e smog.",
     dNone: "Ultima măsurătoare e prea veche ca să-ți dăm un sfat. Revino mai târziu.",
-    factValue: "{p}: <b>{v} µg/m³</b> (pragul Adia: bun sub {a}, smog peste {b})",
+    factValue: "{p}: <b>{v} µg/m³</b> (pragurile Adia: bun sub {a}, smog peste {b})",
     factWhen: "Măsurat între {a} și {b}, {ago} · valori provizorii",
     factIndex: "Indicele european: <b>{i}</b> ({n} din 6)",
     ago0: "acum mai puțin de o oră", ago1: "acum o oră", agoN: n => `acum ${n} ${n % 100 >= 20 ? "de " : ""}ore`,
     pEvening: "Seara, până la 22", pNight: "Noaptea, 22–07", pMorning: "Dimineața, 07–10", pNow: "Până la 07",
     lv: { good: "bun", warn: "moderat", bad: "smog", none: "fără date" },
-    nightGood: "Aer bun toată noaptea.", nightGoodSub: "Afară rămâne bine: poți lăsa geamul întredeschis.",
+    nightGood: "Aer bun toată noaptea.", nightGoodSub: "Aerul de afară rămâne bun: poți lăsa geamul întredeschis.",
     nightWarn: "Aer moderat la noapte, mai ales între {a} și {b}.", nightBad: "Smog probabil la noapte, între {a} și {b}.",
     nightWarnAll: "Aer moderat toată noaptea.", nightBadAll: "Smog probabil toată noaptea.", shutAll: "Ține geamul închis și seara, și noaptea.",
     shutNight: "Noaptea, ține geamul închis.",
     bestAt: "Cel mai bun moment să aerisești: {a}–{b}.", anyTime: "Poți aerisi oricând până la 22:00.",
-    shortAt: "Dacă aerisești, fă-o scurt, pe la {a}.", noAir: "Și seara e mai bine să ții geamul închis.",
-    noForecast: "Prognoza nu e disponibilă acum.", noForecastSub: "Uită-te la valoarea de acum înainte să deschizi geamul.",
+    shortAt: "Dacă aerisești, fă-o scurt, în jurul orei {a}.", noAir: "Și seara e mai bine să ții geamul închis.",
+    noForecast: "Prognoza nu e disponibilă acum.", noForecastSub: "Verifică valoarea de acum înainte să deschizi geamul.",
     measured: "măsurat", forecast: "prognoză", nowLine: "acum", night: "noapte",
     zGood: "bun ≤ {a}", zWarn: "moderat", zBad: "smog > {b} µg/m³ {p}",
     near: "{p} · {n} · cea mai apropiată: {s}, la {d} km",
     stations: n => (n === 1 ? "estimat dintr-o singură stație oficială" : `estimat din ${n} ${n % 100 >= 20 || n === 0 ? "de " : ""}stații oficiale`),
-    pm10only: "În Buzău există o singură stație oficială. Ea măsoară particulele PM10, nu și pe cele fine (PM2.5), așa că sfatul e mai aproximativ.",
-    outside: "Acoperim deocamdată doar Bucureștiul și Buzăul. Cea mai apropiată stație e la {d} km. Alege o zonă din listă.",
-    gpsAsk: "Caut locația…", gpsNo: "Browserul nu a dat locația. Alege zona din listă.", myPlace: "Locația mea",
+    pm10only: "Acum stațiile ne dau doar PM10, nu și particulele fine (PM2.5), așa că sfatul e mai aproximativ.",
+    outside: "Acoperim deocamdată doar Bucureștiul. Cea mai apropiată stație e la {d} km. Alege o zonă din listă.",
+    gpsAsk: "Caut locația…", gpsNo: "Nu am primit locația de la browser. Alege zona din listă.", myPlace: "Locația mea",
     loadFail: "Nu am putut încărca datele. Încearcă din nou peste câteva minute.",
-    stale: "Ultima măsurătoare din zonă e de {ago}: valorile pot fi depășite.",
+    stale: "Ultima măsurătoare din zonă e de {ago}: valorile s-ar putea să nu mai fie actuale.",
     fresh: "Măsurători până la {m} · pagină actualizată la {g} (ora României).",
     co2Mult: r => (r % 1 < 0.5 ? `de peste ${Math.floor(r)} ori` : `de aproape ${Math.ceil(r)} ori`) + " mai mult CO₂ decât afară", co2Ok: "aer bun dimineața",
-    co2Stale: "aer închis dimineața", co2Bad: "aer închis: e timpul să aerisești de mult",
+    co2Stale: "aer închis dimineața", co2Bad: "aer foarte închis dimineața",
     km: "km", type: { traffic: "lângă trafic", background: "fond urban", industrial: "zonă industrială", other: "" },
     stAt: "la {a}–{b}",
-    chartAria: "{p}: în ultimele 24 de ore între {lo} și {hi} µg/m³. Prognoză pentru următoarele 36 de ore: cel mult {fmax} µg/m³, pe la {fat}.",
+    chartAria: "{p}: în ultimele 24 de ore între {lo} și {hi} µg/m³. Prognoză pentru următoarele 36 de ore: cel mult {fmax} µg/m³, în jurul orei {fat}.",
     chartAriaNoFc: "{p}: în ultimele 24 de ore între {lo} și {hi} µg/m³. Fără prognoză.",
-    alertTitle: "Vrei un e-mail în serile cu smog?",
-    alertSub: "Îl trimitem seara, în jur de ora 18, doar când prognoza arată smog la noapte. Cel mult unul pe zi.",
-    emailLabel: "Adresa de email", cityLabel: "Orașul", emailPh: "nume@exemplu.ro",
+    alertTitle: "Vrei un e-mail când se anunță smog la noapte?",
+    alertSub: "Îl trimitem seara, de obicei în jurul orei 18, doar când prognoza arată smog pentru noaptea care urmează. Cel mult unul pe zi.",
+    emailLabel: "Adresa de e-mail", emailPh: "nume@exemplu.ro",
     alertSubmit: "Trimite-mi alertele", alertAlso: "Anunță-mă și când apare Adia",
-    alertConsent: 'Sunt de acord să primesc de la Adia alertele de smog și, dacă am bifat, vestea lansării. Întâi îți trimitem un e-mail de confirmare. Te poți dezabona oricând. <a href="confidentialitate.html">Cum folosim datele</a>',
-    errEmail: "Scrie o adresă de email validă, de forma nume@exemplu.ro.", errConsent: "Bifează acordul ca să-ți putem scrie.",
+    alertConsent: 'Sunt de acord să primesc de la Adia alertele de smog și, dacă am bifat, vestea lansării. Mai întâi primesc un e-mail de confirmare și mă pot dezabona oricând. <a href="confidentialitate.html">Cum folosim datele</a>',
+    errEmail: "Introdu o adresă de e-mail validă, de exemplu nume@exemplu.ro.", errConsent: "Bifează acordul, ca să-ți putem trimite e-mailuri.",
     preview: "Previzualizare: formularul nu trimite nimic aici. Funcționează pe site-ul publicat.",
-    thanks: "Aproape gata: ți-am trimis un e-mail. Apasă pe linkul de confirmare din el ca să primești alertele.",
+    thanks: "Aproape gata: ți-am trimis un e-mail. Deschide-l și apasă pe linkul de confirmare ca să primești alertele.",
     failed: "Nu am putut trimite formularul. Încearcă din nou peste un minut.",
-    mMore: "Toate detaliile și cifrele de precizie →",
+    mMore: "Toate detaliile și cifrele despre precizie →",
     mTitle: "Cum calculăm",
     method: [
-      "Valoarea de lângă tine e o medie a stațiilor oficiale din zonă, în care stațiile mai apropiate contează mai mult. În teste pe o lună, eroarea tipică a fost de circa 4 µg/m³ în interiorul rețelei de stații; la marginea orașului e mai mare.",
-      "Măsurătorile ajung cu 2–3 ore întârziere și sunt provizorii. Scoatem valorile zero sau negative, cele blocate pe aceeași cifră 6 ore și vârfurile izolate mult peste stațiile vecine.",
-      "Prognoza vine de la modelul SILAM, corectat cu diferența tipică față de stații din ultima săptămână și pornit de la valoarea măsurată lângă tine. Modelul brut a prins aproximativ 6 din 10 ore cu smog într-o lună de test; corecția noastră nu a fost încă testată pe o perioadă lungă.",
-      "Pragurile Adia pentru PM2.5: bun sub 15 µg/m³, smog peste 25 (aceeași cifră ca limita zilnică pe care UE o impune din 2030, dar noi o aplicăm pe ore). Indicele european de calitate a aerului are 6 trepte și e afișat separat.",
-      "În Buzău se măsoară doar PM10. Folosim 20 și 30 µg/m³, pentru că, la stațiile din București, PM2.5 e în medie cam 0,78 din PM10.",
+      "Valoarea de lângă tine e o medie a stațiilor oficiale din zonă, în care stațiile mai apropiate contează mai mult. Într-un test de o lună, eroarea tipică a fost de circa 4 µg/m³ în zonele bine acoperite de stații; la marginea orașului e mai mare.",
+      "Măsurătorile ajung cu 1–3 ore întârziere și sunt provizorii. Eliminăm valorile zero sau negative, cele blocate pe aceeași cifră 6 ore și vârfurile izolate mult peste stațiile vecine.",
+      "Prognoza vine de la modelul SILAM, corectat cu diferența tipică față de stații din ultima săptămână și pornit de la valoarea măsurată lângă tine. Modelul necorectat a anticipat aproximativ 6 din 10 ore cu smog într-o lună de test; corecția noastră nu a fost încă testată pe o perioadă lungă.",
+      "Pragurile Adia pentru PM2.5: bun sub 15 µg/m³, smog peste 25 (aceeași valoare ca limita zilnică a UE din 2030, doar că noi o aplicăm fiecărei ore). Indicele european de calitate a aerului are 6 trepte și e afișat separat.",
+      "Dacă lipsesc datele PM2.5, folosim PM10, cu pragurile 20 și 30 µg/m³: la stațiile din București, PM2.5 reprezintă în medie circa 0,78 din PM10.",
     ],
   },
   en: {
@@ -326,62 +341,62 @@ const T = {
     stTitle: "Nearest official stations", stTitle1: "Nearest official station",
     bedLabel: "Inside", bedTitle: "Outdoor air is only half the story. What are you breathing in the bedroom?",
     optPeople: "People sleeping in the room", optRoom: "Room size", optDoor: "Bedroom door at night", doorShut: "shut", doorOpen: "open",
-    bedNote: "A rough calculation for 8 hours of sleep with the window shut, not a measurement. Every room is different; in tighter rooms the value is higher.",
-    bedCta: "Adia shows how much CO₂ you really have. Keep me posted",
-    fcNote: "The forecast can be wrong, especially a few hours ahead. Check again in the evening.",
+    bedNote: "An estimate for 8 hours of sleep with the window shut, not a measurement. Every room is different; in better-sealed rooms the value is higher.",
+    bedCta: "Adia shows the real CO₂ in your room. Keep me posted",
+    fcNote: "Forecasts can be off, especially further ahead. Check again in the evening.",
     credit: 'Data: stations of Romania\'s National Air Quality Monitoring Network (ANPM), through the <a href="https://www.eea.europa.eu/en/legal-notice" target="_blank" rel="noopener">European Environment Agency</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY</a> licence; provisional values, not yet checked by the network. Forecast: Finnish Meteorological Institute, <a href="https://silam.fmi.fi/" target="_blank" rel="noopener">SILAM</a> model (CC BY 4.0 licence). We adjust the forecast to the local stations.',
     privacy: "Your location stays on your phone: the page downloads the data for the whole city and picks the nearest point itself.",
     disclaimer: "General information about outdoor air. Not medical advice.",
     vGood: "You can air the room", vWarn: "Air the room briefly", vBad: "Keep the window shut", vNone: "No recent data", vOut: "Area not covered",
     noAreaData: "We have no recent measurements for {a}. Check back later.",
-    dGood: "The air outside is good right now.", dWarn: "The air outside is moderately polluted: 5 minutes, then shut the window.", dBad: "There is smog outside.",
+    dGood: "The air outside is good right now.", dWarn: "The air outside is moderately polluted: air the room for 5 minutes, then shut the window.", dBad: "There is smog outside.",
     dNone: "The last measurement is too old to give you advice. Check back later.",
-    factValue: "{p}: <b>{v} µg/m³</b> (Adia limits: good below {a}, smog above {b})",
+    factValue: "{p}: <b>{v} µg/m³</b> (Adia's limits: good below {a}, smog above {b})",
     factWhen: "Measured between {a} and {b}, {ago} · provisional values",
     factIndex: "European index: <b>{i}</b> ({n} of 6)",
     ago0: "less than an hour ago", ago1: "1 hour ago", agoN: n => `${n} hours ago`,
     pEvening: "Evening, until 22", pNight: "Night, 22–07", pMorning: "Morning, 07–10", pNow: "Until 07",
     lv: { good: "good", warn: "moderate", bad: "smog", none: "no data" },
-    nightGood: "Good air all night.", nightGoodSub: "It stays fine outside: you can leave the window open a crack.",
+    nightGood: "Good air all night.", nightGoodSub: "The air outside stays good: you can leave the window open a crack.",
     nightWarn: "Moderate air tonight, mostly between {a} and {b}.", nightBad: "Smog likely tonight, between {a} and {b}.",
     nightWarnAll: "Moderate air all night.", nightBadAll: "Smog likely all night.", shutAll: "Keep the window shut this evening and tonight.",
-    shutNight: "At night, keep the window shut.",
+    shutNight: "Keep the window shut overnight.",
     bestAt: "Best time to air the room: {a}–{b}.", anyTime: "You can air the room any time until 22:00.",
-    shortAt: "If you air the room, keep it short, around {a}.", noAir: "Better to keep the window shut this evening too.",
+    shortAt: "If you air the room, keep it brief, around {a}.", noAir: "Better to keep the window shut this evening too.",
     noForecast: "The forecast isn't available right now.", noForecastSub: "Check the current value before you open the window.",
     measured: "measured", forecast: "forecast", nowLine: "now", night: "night",
     zGood: "good ≤ {a}", zWarn: "moderate", zBad: "smog > {b} µg/m³ {p}",
     near: "{p} · {n} · nearest: {s}, {d} km away",
     stations: n => (n === 1 ? "estimated from a single official station" : `estimated from ${n} official stations`),
-    pm10only: "Buzău has a single official station. It measures PM10 particles, not the fine ones (PM2.5), so the advice is rougher.",
-    outside: "We only cover Bucharest and Buzău for now. The nearest station is {d} km away. Pick an area from the list.",
+    pm10only: "Right now the stations only give us PM10, not the fine particles (PM2.5), so the advice is rougher.",
+    outside: "We only cover Bucharest for now. The nearest station is {d} km away. Pick an area from the list.",
     gpsAsk: "Finding your location…", gpsNo: "The browser didn't share your location. Pick an area from the list.", myPlace: "My location",
-    loadFail: "The data couldn't be loaded. Try again in a few minutes.",
+    loadFail: "We couldn't load the data. Please try again in a few minutes.",
     stale: "The latest measurement here is from {ago}: the values may be out of date.",
     fresh: "Measurements up to {m} · page updated at {g} (Romanian time).",
     co2Mult: r => (r % 1 < 0.5 ? `more than ${Math.floor(r)} times` : `almost ${Math.ceil(r)} times`) + " as much CO₂ as outside", co2Ok: "good air in the morning",
-    co2Stale: "stale air in the morning", co2Bad: "stale air: well past the point to air the room",
+    co2Stale: "stale air in the morning", co2Bad: "very stale air in the morning",
     km: "km", type: { traffic: "near traffic", background: "urban background", industrial: "industrial area", other: "" },
     stAt: "at {a}–{b}",
     chartAria: "{p}: between {lo} and {hi} µg/m³ over the last 24 hours. Forecast for the next 36 hours: at most {fmax} µg/m³, around {fat}.",
     chartAriaNoFc: "{p}: between {lo} and {hi} µg/m³ over the last 24 hours. No forecast.",
-    alertTitle: "Want an email on evenings with smog?",
-    alertSub: "We send it in the evening, around 18:00, only when the forecast shows smog tonight. At most one a day.",
-    emailLabel: "Email address", cityLabel: "City", emailPh: "name@example.com",
+    alertTitle: "Want an email when smog is on the way?",
+    alertSub: "We send it in the evening, usually around 18:00, and only when the forecast shows smog for the night ahead. Never more than one a day.",
+    emailLabel: "Email address", emailPh: "name@example.com",
     alertSubmit: "Send me the alerts", alertAlso: "Also tell me when Adia launches",
-    alertConsent: 'I agree to receive the smog alerts from Adia and, if ticked, the launch news. We first send you a confirmation email. You can unsubscribe at any time. <a href="confidentialitate.html#en">How we use your data</a>',
-    errEmail: "Enter a valid email address, like name@example.com.", errConsent: "Tick the consent box so we can email you.",
+    alertConsent: 'I agree to receive smog alerts from Adia and, if ticked, launch news. I will receive a confirmation email first and can unsubscribe at any time. <a href="confidentialitate.html#en">How we use your data</a>',
+    errEmail: "Enter a valid email address, like name@example.com.", errConsent: "Please tick the consent box so we can email you.",
     preview: "Preview: this form doesn't send anything here. It works on the published site.",
-    thanks: "Almost done: we've sent you an email. Click the confirmation link in it to start getting the alerts.",
-    failed: "The form couldn't be sent. Try again in a minute.",
+    thanks: "Almost done: we've sent you an email. Open it and click the confirmation link to start getting the alerts.",
+    failed: "Something went wrong and the form wasn't sent. Please try again in a minute.",
     mMore: "All the details and accuracy figures →",
     mTitle: "How we calculate",
     method: [
-      "The value near you is an average of the official stations in the area, with closer stations counting more. In a month of tests the typical error was about 4 µg/m³ inside the station network; it is larger at the edge of the city.",
-      "Measurements arrive 2–3 hours late and are provisional. We drop zero or negative values, values stuck on the same number for 6 hours, and isolated peaks far above the neighbouring stations.",
-      "The forecast comes from the SILAM model, corrected by its typical gap to the stations over the last week and started from the value measured near you. The raw model caught about 6 in 10 smog hours in a month-long test; our correction hasn't been tested over a long period yet.",
-      "Adia limits for PM2.5: good below 15 µg/m³, smog above 25 (the same number as the EU daily limit from 2030, but we apply it hour by hour). The European air quality index has 6 levels and is shown separately.",
-      "Buzău only measures PM10. We use 20 and 30 µg/m³, because at the Bucharest stations PM2.5 is on average about 0.78 of PM10.",
+      "The value near you is an average of the official stations in the area, with closer stations counting more. In a month-long test, the typical error was about 4 µg/m³ in areas well covered by stations; it is larger at the edge of the city.",
+      "Measurements arrive 1–3 hours late and are provisional. We filter out zero or negative values, values stuck on the same number for 6 hours, and isolated peaks far above the neighbouring stations.",
+      "The forecast comes from the SILAM model, corrected by its typical gap to the stations over the last week and started from the value measured near you. The uncorrected model predicted about 6 in 10 smog hours in a month-long test; our correction hasn't been tested over a long period yet.",
+      "Adia's limits for PM2.5: good below 15 µg/m³, smog above 25 (the same value as the EU daily limit from 2030, but we apply it to every hour). The European air quality index has 6 levels and is shown separately.",
+      "If the PM2.5 data is missing, we use PM10, with limits of 20 and 30 µg/m³: at the Bucharest stations, PM2.5 is on average about 0.78 of PM10.",
     ],
   },
 };
@@ -478,7 +493,6 @@ function draw() {
   $("problem").hidden = true;
   if (e.outside != null) { $("where").textContent = fill(L.outside, { d: nf(e.outside) }); showNone(fill(L.outside, { d: nf(e.outside) }), L.vOut); $("where").textContent = ""; return; }
   last = e;
-  if (!cityTouched) $("a-oras").value = e.A.name === "buzau" ? "buzau" : "bucuresti";   // the alert form follows the chosen area
   const P = e.P, cur = curIndex();
   const n = e.st.length, near = e.st[0];
   $("where").innerHTML = esc(n ? fill(L.near, { p: place.label, n: L.stations(n), s: stationLabel(near.s), d: nf(near.d, 1) }) : place.label) +
@@ -644,7 +658,8 @@ function co2() {
   const css = out + G / (a * V) * 1e6, c = css + (c0 - css) * Math.exp(-a * 8);
   const r = Math.round(c / 100) * 100, L = T[lang];
   $("co2").textContent = "≈ " + nf(r) + " ppm";
-  $("co2-say").textContent = L.co2Mult(c / out) + " · " + (r < 1000 ? L.co2Ok : r <= 1500 ? L.co2Stale : L.co2Bad);
+  $("co2-say").textContent = L.co2Mult(c / out) + " · " + [L.co2Ok, L.co2Stale, L.co2Bad][AC.co2Level(r)];
+  AC.co2Scale($("co2-scale"), r, lang);
 }
 document.querySelectorAll(".seg").forEach(seg => seg.addEventListener("click", ev => {
   const b = ev.target.closest("button"); if (!b) return;
@@ -654,8 +669,6 @@ document.querySelectorAll(".seg").forEach(seg => seg.addEventListener("click", e
 }));
 
 /* ---------- smog alert sign-up (Netlify Forms; Brevo sends the confirmation email and the alerts) ---------- */
-let cityTouched = false;
-$("a-oras").addEventListener("change", () => { cityTouched = true; });
 function aSay(key, kind, field) {
   const m = $("a-msg");
   m.dataset.key = key; m.className = "fmsg " + kind; m.textContent = T[lang][key];
@@ -728,11 +741,11 @@ let resizeTimer = null;
 window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (last && D) drawChart(last, curIndex()); }, 150); });
 
 /* ---------- start ---------- */
-let start = store.get("adia-lang") || "ro";
+let start = store.get("adia-lang") || "en";   // English unless the visitor picked Romanian (or the link ends in #ro)
 if (location.hash === "#en" || location.hash === "#ro") start = location.hash.slice(1);
 const spot0 = SPOTS.find(s => s.key === store.get("adia-spot")) || SPOTS[0];
 place = { key: spot0.key, lat: spot0.lat, lon: spot0.lon, label: spot0[start] || spot0.ro };
-setLang(T[start] ? start : "ro", false);
+setLang(T[start] ? start : "en", false);
 fetch(DATA_URL, { cache: "no-cache" })
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then(d => { if (!d || !Array.isArray(d.stations) || !d.limits) throw new Error("bad data"); D = d; })

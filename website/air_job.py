@@ -39,16 +39,15 @@ SILAM_VARS = {"pm25": "cnc_PM2_5", "pm10": "cnc_PM10"}
 NOMINATIM = "https://nominatim.openstreetmap.org/reverse"
 PAST_H, AHEAD_H = 48, 48  # hours of readings sent to the page, hours of forecast after the latest reading
 SCALE_H = 7 * 24  # the forecast is compared with the stations over this many hours
-LABELS = {"bucharest": "București", "buzau": "Buzău"}
+LABELS = {"bucharest": "București"}
 # The page's own limits, µg/m³: [good up to, smog above]. PM2.5 25 is the alert level used everywhere
-# in the project. Buzău only measures PM10; hourly PM2.5 is about 0.78 x PM10 at the Bucharest
-# stations, so PM10 20 / 30 is close to PM2.5 15 / 25.
+# in the project. PM10 is the fallback when no PM2.5 station reports; hourly PM2.5 is about 0.78 x PM10
+# at the Bucharest stations, so PM10 20 / 30 is close to PM2.5 15 / 25.
 LIMITS = {"pm25": [15, 25], "pm10": [20, 30]}
 TYPES = {"traffic": "traffic", "background": "background", "industrial": "industrial"}
-# The two areas: centre and radius in km (the same as the analysis app's config.toml)
+# The area covered: centre and radius in km (the same as the analysis app's config.toml). Bucharest only.
 AREAS = [
     {"name": "bucharest", "lat": 44.4268, "lon": 26.1025, "radius_km": 15.0},
-    {"name": "buzau", "lat": 45.15, "lon": 26.82, "radius_km": 8.0},
 ]
 # European Air Quality Index, revised hourly bands (EEA): [(upper limit µg/m³, level), ...]
 EAQI = {
@@ -81,7 +80,8 @@ def refresh_stations() -> None:
 
     old = {r["code"]: r for r in json.loads(STATIONS.read_text(encoding="utf-8"))} if STATIONS.exists() else {}
     rows = []
-    for s in load_stations().filter(pl.col("source") == "eea").iter_rows(named=True):
+    covered = {a["name"] for a in AREAS}
+    for s in load_stations().filter((pl.col("source") == "eea") & pl.col("area").is_in(list(covered))).iter_rows(named=True):
         code = json.loads(s["extra"])["code"]
         kind, pollutants = (s["info"].split(";") + [""])[:2]
         place = old.get(code, {}).get("place")
@@ -210,7 +210,7 @@ def main() -> None:
     for a in AREAS:
         here = {f"eea:{r['code']}" for r in rows if r["area"] == a["name"]}
         has = {p for p in ("pm25", "pm10") if any(s.get(p) for s in out_stations if s["area"] == a["name"])}
-        main_p = "pm25" if "pm25" in has else "pm10"  # Buzău has no PM2.5 station
+        main_p = "pm25" if "pm25" in has else "pm10"  # PM10 only if no PM2.5 station reports
         area = dict(name=a["name"], label=LABELS.get(a["name"], a["name"].capitalize()), lat=a["lat"], lon=a["lon"],
                     radius_km=a["radius_km"], pollutant=main_p, forecast=None, bias=None)
         try:

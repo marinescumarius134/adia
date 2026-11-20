@@ -8,7 +8,6 @@
 //   BREVO_DOI_TEMPLATE_ID         the confirmation email template (see website/email/README.md)
 //   BREVO_LIST_WAITLIST           list id: launch news
 //   BREVO_LIST_SMOG_BUCURESTI     list id: smog alerts, Bucharest
-//   BREVO_LIST_SMOG_BUZAU         list id: smog alerts, Buzău
 //   SITE_URL (optional)           defaults to Netlify's own URL variable
 // Without BREVO_API_KEY nothing is sent to Brevo, and the submissions are only kept in Netlify.
 
@@ -39,7 +38,7 @@ export async function handler(event) {
     return ok;
   }
 
-  const cityList = d.oras === "buzau" ? env.BREVO_LIST_SMOG_BUZAU : env.BREVO_LIST_SMOG_BUCURESTI;
+  const cityList = env.BREVO_LIST_SMOG_BUCURESTI;
   const wanted = form === "lista"
     ? [env.BREVO_LIST_WAITLIST, d.alerta === "da" ? cityList : null]
     : [cityList, d.lista === "da" ? env.BREVO_LIST_WAITLIST : null];
@@ -58,7 +57,7 @@ export async function handler(event) {
       email,
       includeListIds: lists,
       templateId,
-      redirectionUrl: `${site}/?confirmat=1${d.limba === "en" ? "#en" : ""}`,
+      redirectionUrl: `${site}/?confirmat=1#${d.limba === "ro" ? "ro" : "en"}`,   // the site opens in English unless #ro
     }),
   }).catch(err => ({ ok: false, status: 0, text: async () => String(err) }));
   if (res.ok) console.log(`submission-created: "${form}" -> Brevo double opt-in sent, lists ${lists.join(",")}`);

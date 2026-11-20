@@ -1,6 +1,6 @@
 <title>Adia</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Adia îți spune când să aerisești dormitorul și când să ții geamul închis din cauza smogului. București și Buzău.">
+<meta name="description" content="Adia îți spune când să aerisești dormitorul și când e mai bine să ții geamul închis din cauza smogului. Pentru dormitoarele din București.">
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
 /* Layout: a night-time story in four scenes: the bedside screen, the two-sided problem, how it works, the waitlist. Dark-first (night), light = dawn. */
@@ -113,6 +113,23 @@ a { color: var(--accent); }
 .stat { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .stat b { font: 800 clamp(2rem, 4.4vw, 2.8rem) var(--font-display); line-height: 1; letter-spacing: -0.02em; }
 .stat span { color: var(--fg-2); font-size: 0.95rem; max-width: 32ch; }
+/* CO₂ scale (site.js): three levels, labels always visible, the marker shows where this value sits */
+.co2scale { min-width: 0; }
+.cs-bar { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; height: 10px; margin: 6px 0 0; }
+.cs-seg { opacity: 0.35; }
+.cs-seg.on { opacity: 1; }
+.cs-0 { background: var(--good); border-radius: 5px 0 0 5px; }
+.cs-1 { background: var(--warn); }
+.cs-2 { background: var(--bad, var(--smog)); border-radius: 0 5px 5px 0; }
+.cs-mark { position: absolute; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--fg); border: 4px solid var(--panel); box-shadow: 0 0 0 1px var(--line-strong); }
+.cs-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 8px; margin-top: 8px; }
+.cs-legend span { display: grid; align-content: start; gap: 1px; font-size: 0.85rem; line-height: 1.3; color: var(--fg-2); min-width: 0; }
+.cs-legend span.on { color: var(--fg); }
+.cs-legend b { font-weight: 500; }
+.cs-legend span.on b { font-weight: 700; }
+.cs-legend small { font: 0.75rem var(--font-mono); color: var(--muted); white-space: nowrap; }
+@media (max-width: 360px) { .cs-legend small { font-size: 0.68rem; } }
+.cs-note { margin: 10px 0 0; font-size: 0.85rem; color: var(--fg-2); }
 .side.in .stat b { color: var(--co2); }
 .side.out .stat b { color: var(--smog); }
 .chart { position: relative; }
@@ -163,8 +180,6 @@ input::placeholder { color: var(--muted); opacity: 1; }
 .facts-list { margin: 18px 0 0; padding-left: 1.1em; display: grid; gap: 6px; color: var(--fg-2); max-width: 32rem; }
 .check { display: flex; gap: 10px; align-items: center; font-size: 0.95rem; }
 .check input { width: 20px; height: 20px; flex: none; accent-color: var(--accent); margin: 0; }
-.city { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--fg-2); }
-select { font: 1rem var(--font-body); color: var(--fg); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; padding: 9px 12px; min-height: 44px; }
 .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line-strong); }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .banner { margin-top: 8px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
@@ -195,12 +210,12 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
   <div class="wrap" id="confirmed" hidden><p class="banner" role="status" data-i18n="confirmed">Gata, adresa ta e confirmată. Mulțumim!</p></div>
   <section class="hero wrap">
     <div>
-      <div class="kicker" data-i18n="kicker">Pentru dormitoarele din București și Buzău</div>
+      <div class="kicker" data-i18n="kicker">Pentru dormitoarele din București</div>
       <h1><span class="l1" data-i18n="h1a">Geam deschis sau închis?</span> <span class="l2" data-i18n="h1b">Noaptea, răspunsul se schimbă de la o oră la alta.</span></h1>
       <p class="lead" data-i18n="lead">Adia stă pe noptieră și îți spune când să aerisești dormitorul și când să ții geamul închis din cauza smogului de afară.</p>
       <div class="cta-row">
         <a class="btn" href="#join" data-i18n="cta">Anunță-mă când apare</a>
-        <span class="tag" data-i18n="tag">Prototip în teste, iarna 2026–2027</span>
+        <span class="tag" data-i18n="tag">Prototip în testare, iarna 2026–2027</span>
       </div>
       <a class="live" id="live" href="aer.html" hidden><span class="ldot" id="live-dot" aria-hidden="true"></span><span id="live-text"></span></a>
     </div>
@@ -219,22 +234,23 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
         <button type="button" data-m="1" aria-pressed="true"><span data-i18n="m1">La culcare</span><span class="t">23:00</span></button>
         <button type="button" data-m="2" aria-pressed="false"><span data-i18n="m2">Dimineața</span><span class="t">07:00</span></button>
       </div>
-      <figcaption data-i18n="devcap">Exemplu de ecran. Noaptea, Adia nu face lumină și nici zgomot.</figcaption>
+      <figcaption data-i18n="devcap">Exemplu de ecran. Noaptea, Adia nu emite lumină și nu face zgomot.</figcaption>
     </figure>
   </section>
 
   <section class="problem wrap" aria-labelledby="problem-title">
-    <h2 id="problem-title" data-i18n="pTitle">Noaptea, aerul din dormitor are doi dușmani: CO₂ dinăuntru și smogul de afară</h2>
+    <h2 id="problem-title" data-i18n="pTitle">Noaptea, aerul din dormitor are doi dușmani: CO₂ din cameră și smogul de afară</h2>
     <div class="sides">
       <article class="side in">
         <div class="where" data-i18n="inWhere">Înăuntru</div>
         <h3 data-i18n="inTitle">Cu geamul și ușa închise, CO₂ crește toată noaptea.</h3>
         <div class="stat"><b class="num" id="in-stat">≈ 2.400 ppm</b><span data-i18n="inStat">CO₂ la 7 dimineața, după 8 ore de somn: de aproape 6 ori mai mult decât afară</span></div>
+        <div class="co2scale" id="in-scale"></div>
         <div class="chart" id="co2-chart">
           <div class="cap" data-i18n="inCap">CO₂ în dormitor, de la 23:00 la 07:00 (calcul estimativ)</div>
         </div>
         <p class="note small" data-i18n="inNote">Calcul estimativ: 2 adulți, dormitor de 12 m², geam și ușă închise. În camerele mai etanșe valoarea e mai mare. Adia măsoară valoarea reală din camera ta.</p>
-        <p class="note" data-i18n-html="inStudy">Un studiu mic din Danemarca a găsit un somn mai bun și o concentrare mai bună a doua zi când aerul din dormitor era mai proaspăt.<sup><a href="#src-1">1</a></sup></p>
+        <p class="note" data-i18n-html="inStudy">Un studiu restrâns din Danemarca a observat un somn mai bun și o concentrare mai bună a doua zi atunci când aerul din dormitor era mai proaspăt.<sup><a href="#src-1">1</a></sup></p>
       </article>
 
       <article class="side out">
@@ -244,13 +260,13 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
         <div class="chart" id="night-chart">
           <div class="cap" data-i18n="outCap">Ore cu smog în fiecare noapte, București, 20 octombrie – 18 noiembrie 2026</div>
         </div>
-        <p class="note small" data-i18n="outDef">Smog = peste 25 µg/m³ de particule fine (PM2.5), mediana celor 23 de stații oficiale din București.</p>
-        <p class="note" data-i18n-html="outNote">Cinci nopți la rând, între 8 și 13 noiembrie, smogul a ținut aproape toată noaptea. Între 21:00 și 02:00, concentrația de particule fine a fost în medie cu 40% mai mare decât între 10:00 și 17:00.<sup><a href="#src-2">2</a></sup></p>
+        <p class="note small" data-i18n="outDef">Smog înseamnă aici peste 25 µg/m³ de particule fine (PM2.5), ca mediană a celor 23 de stații oficiale din București.</p>
+        <p class="note" data-i18n-html="outNote">Cinci nopți la rând, între 8 și 13 noiembrie, smogul a durat aproape toată noaptea. Între 21:00 și 02:00, concentrația de particule fine a fost în medie cu 40% mai mare decât între 10:00 și 17:00.<sup><a href="#src-2">2</a></sup></p>
       </article>
     </div>
 
     <div class="punch">
-      <p><span data-i18n="punchA">Deschizi geamul și intră smogul. Îl ții închis și respiri același aer toată noaptea.</span><span data-i18n="punchB">Adia urmărește aerul din cameră și pe cel de afară și îți spune ce să faci.</span></p>
+      <p><span data-i18n="punchA">Deschizi geamul și intră smogul. Îl ții închis și respiri același aer toată noaptea.</span><span data-i18n="punchB">Adia urmărește aerul din cameră și pe cel de afară și îți spune ce e mai bine să faci.</span></p>
       <a class="btn" href="#join" data-i18n="cta2">Anunță-mă când apare</a>
     </div>
   </section>
@@ -259,8 +275,8 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
     <h2 id="how-title" data-i18n="howTitle">Cum funcționează</h2>
     <ol class="steps">
       <li><span class="n" aria-hidden="true">1</span><h3 data-i18n="s1t">Măsoară</h3><p data-i18n="s1d">CO₂, temperatura și umiditatea din dormitor, în fiecare minut.</p></li>
-      <li><span class="n" aria-hidden="true">2</span><h3 data-i18n="s2t">Verifică aerul de afară</h3><p data-i18n="s2d">Aerul din zona ta, estimat din stațiile oficiale din București și Buzău.</p></li>
-      <li><span class="n" aria-hidden="true">3</span><h3 data-i18n="s3t">Îți spune ce să faci</h3><p data-i18n="s3d">Pe ecran, seara, la culcare și dimineața. Fără aplicație. Noaptea, nu face lumină și nici zgomot.</p></li>
+      <li><span class="n" aria-hidden="true">2</span><h3 data-i18n="s2t">Verifică aerul de afară</h3><p data-i18n="s2d">Aerul din zona ta, estimat din stațiile oficiale din București.</p></li>
+      <li><span class="n" aria-hidden="true">3</span><h3 data-i18n="s3t">Îți spune ce să faci</h3><p data-i18n="s3d">Direct pe ecran: seara, la culcare și dimineața. Fără aplicație. Noaptea nu emite lumină și nu face zgomot.</p></li>
     </ol>
   </section>
 
@@ -268,10 +284,10 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
     <div class="join-grid">
       <div>
         <h2 id="join-title" data-i18n="joinTitle">Vrei să afli printre primii când e gata?</h2>
-        <p class="sub" data-i18n="joinSub">Testăm prototipul în câteva dormitoare în această iarnă. Nu se vinde încă. Dacă testul iese bine, îți scriem primii.</p>
+        <p class="sub" data-i18n="joinSub">În această iarnă testăm prototipul în câteva dormitoare. Nu se vinde încă. Dacă testul merge bine, vei afla printre primii.</p>
         <ul class="facts-list">
           <li data-i18n="fact1">Prețul nu e stabilit încă.</li>
-          <li data-i18n="fact2">Se alimentează prin USB și folosește Wi-Fi-ul casei pentru aerul de afară.</li>
+          <li data-i18n="fact2">Se alimentează prin USB și folosește Wi-Fi-ul de acasă ca să afle cum e aerul afară.</li>
           <li data-i18n="fact3">Fără aplicație: sfatul apare pe ecranul de pe noptieră.</li>
         </ul>
       </div>
@@ -280,7 +296,7 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
         <input type="hidden" name="form-name" value="lista">
         <input type="hidden" name="varianta"><input type="hidden" name="sursa"><input type="hidden" name="limba"><input type="hidden" name="id">
         <p class="hp" aria-hidden="true"><label>Nu completa / leave empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
-        <label class="field" for="email"><span data-i18n="emailLabel">Adresa de email</span>
+        <label class="field" for="email"><span data-i18n="emailLabel">Adresa de e-mail</span>
           <input type="email" id="email" name="email" autocomplete="email" placeholder="nume@exemplu.ro" required>
         </label>
         <fieldset>
@@ -293,9 +309,7 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
           </div>
         </fieldset>
         <fieldset>
-          <label class="check" for="alerta"><input type="checkbox" id="alerta" name="alerta" value="da"><span data-i18n="alertOpt">Trimite-mi și un e-mail în serile cu smog</span></label>
-          <label class="city" for="oras" id="city-row" hidden><span data-i18n="cityLabel">Pentru orașul</span>
-            <select id="oras" name="oras"><option value="bucuresti">București</option><option value="buzau">Buzău</option></select></label>
+          <label class="check" for="alerta"><input type="checkbox" id="alerta" name="alerta" value="da"><span data-i18n="alertOpt">Trimite-mi și un e-mail în serile în care se anunță smog</span></label>
         </fieldset>
         <label class="consent" for="consent"><input type="checkbox" id="consent" name="consent" value="da"><span data-i18n-html="consent">Sunt de acord să primesc e-mailuri de la Adia.</span></label>
         <div><button class="btn" type="submit" id="submit" data-i18n="submit">Anunță-mă</button></div>
@@ -306,7 +320,7 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
         <input type="hidden" name="varianta"><input type="hidden" name="id">
         <p class="hp" aria-hidden="true"><label>Nu completa / leave empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
         <fieldset>
-          <legend id="price-q" data-i18n="priceQ">O ultimă întrebare, opțională: cât ai plăti pe un astfel de dispozitiv?</legend>
+          <legend id="price-q" data-i18n="priceQ">O ultimă întrebare, opțională: cât ai fi dispus să plătești pentru un astfel de dispozitiv?</legend>
           <div class="chips">
             <label><input type="radio" name="pret" value="sub-200"><span data-i18n="p1">sub 200 lei</span></label>
             <label><input type="radio" name="pret" value="200-350"><span data-i18n="p2">200–350 lei</span></label>
@@ -328,7 +342,7 @@ footer ol { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--mut
   <ol>
     <li id="src-1"><span data-i18n="src1">Strøm-Tejsen, Zukowska, Wargocki, Wyon (2016), „The effects of bedroom air quality on sleep and next-day performance”, Indoor Air.</span> <a href="https://doi.org/10.1111/ina.12254" target="_blank" rel="noopener">doi.org/10.1111/ina.12254</a></li>
     <li id="src-2"><span data-i18n-html="src2"></span></li>
-    <li id="src-3"><span data-i18n="src3">Calculul CO₂: 13 litri de CO₂ pe oră pentru fiecare adult care doarme, cameră de 31 m³, 0,4 schimburi de aer pe oră cu geamul și ușa închise, 600 ppm la ora 23:00, aer exterior 420 ppm. Peste 1.500 ppm de la 00:40.</span></li>
+    <li id="src-3"><span data-i18n="src3">Calculul CO₂: 13 litri de CO₂ pe oră pentru fiecare adult care doarme, cameră de 31 m³, 0,4 schimburi de aer pe oră cu geamul și ușa închise, 600 ppm la ora 23:00, aer exterior 420 ppm. Depășește 1.500 ppm de la 00:40.</span></li>
   </ol>
   <p class="site-line" id="site-line"></p>
 </footer>
@@ -340,61 +354,61 @@ const CCBY_LINK = '<a href="https://creativecommons.org/licenses/by/4.0/" target
 const T = {
   ro: {
     pageTitle: "Adia",
-    kicker: "Pentru dormitoarele din București și Buzău",
+    kicker: "Pentru dormitoarele din București",
     h1a: "Geam deschis sau închis?",
     h1b: "Noaptea, răspunsul se schimbă de la o oră la alta.",
     lead: "Adia stă pe noptieră și îți spune când să aerisești dormitorul și când să ții geamul închis din cauza smogului de afară.",
     cta: "Anunță-mă când apare",
-    tag: "Prototip în teste, iarna 2026–2027",
+    tag: "Prototip în testare, iarna 2026–2027",
     m0: "Seara", m1: "La culcare", m2: "Dimineața", moments: "Momentele zilei",
-    devcap: "Exemplu de ecran. Noaptea, Adia nu face lumină și nici zgomot.",
-    pTitle: "Noaptea, aerul din dormitor are doi dușmani: CO₂ dinăuntru și smogul de afară",
+    devcap: "Exemplu de ecran. Noaptea, Adia nu emite lumină și nu face zgomot.",
+    pTitle: "Noaptea, aerul din dormitor are doi dușmani: CO₂ din cameră și smogul de afară",
     inWhere: "Înăuntru",
     inTitle: "Cu geamul și ușa închise, CO₂ crește toată noaptea.",
     inStat: "CO₂ la 7 dimineața, după 8 ore de somn: de aproape 6 ori mai mult decât afară",
     inCap: "CO₂ în dormitor, de la 23:00 la 07:00 (calcul estimativ)",
     inNote: "Calcul estimativ: 2 adulți, dormitor de 12 m², geam și ușă închise. În camerele mai etanșe valoarea e mai mare. Adia măsoară valoarea reală din camera ta.",
-    inStudy: 'Un studiu mic din Danemarca a găsit un somn mai bun și o concentrare mai bună a doua zi când aerul din dormitor era mai proaspăt.<sup><a href="#src-1">1</a></sup>',
+    inStudy: 'Un studiu restrâns din Danemarca a observat un somn mai bun și o concentrare mai bună a doua zi atunci când aerul din dormitor era mai proaspăt.<sup><a href="#src-1">1</a></sup>',
     outWhere: "Afară",
     outTitle: "Iar dacă deschizi geamul, poate intra smogul.",
     outStatB: "6 din 29 de nopți",
     outStat: "cu smog afară cel puțin 3 ore, între 22:00 și 07:00",
     outCap: "Ore cu smog în fiecare noapte, București, 20 octombrie – 18 noiembrie 2026",
-    outDef: "Smog = peste 25 µg/m³ de particule fine (PM2.5), mediana celor 23 de stații oficiale din București.",
-    outNote: 'Cinci nopți la rând, între 8 și 13 noiembrie, smogul a ținut aproape toată noaptea. Între 21:00 și 02:00, concentrația de particule fine a fost în medie cu 40% mai mare decât între 10:00 și 17:00.<sup><a href="#src-2">2</a></sup>',
+    outDef: "Smog înseamnă aici peste 25 µg/m³ de particule fine (PM2.5), ca mediană a celor 23 de stații oficiale din București.",
+    outNote: 'Cinci nopți la rând, între 8 și 13 noiembrie, smogul a durat aproape toată noaptea. Între 21:00 și 02:00, concentrația de particule fine a fost în medie cu 40% mai mare decât între 10:00 și 17:00.<sup><a href="#src-2">2</a></sup>',
     punchA: "Deschizi geamul și intră smogul. Îl ții închis și respiri același aer toată noaptea.",
-    punchB: "Adia urmărește aerul din cameră și pe cel de afară și îți spune ce să faci.",
+    punchB: "Adia urmărește aerul din cameră și pe cel de afară și îți spune ce e mai bine să faci.",
     cta2: "Anunță-mă când apare",
     howTitle: "Cum funcționează",
     s1t: "Măsoară", s1d: "CO₂, temperatura și umiditatea din dormitor, în fiecare minut.",
-    s2t: "Verifică aerul de afară", s2d: "Aerul din zona ta, estimat din stațiile oficiale din București și Buzău.",
-    s3t: "Îți spune ce să faci", s3d: "Pe ecran, seara, la culcare și dimineața. Fără aplicație. Noaptea, nu face lumină și nici zgomot.",
+    s2t: "Verifică aerul de afară", s2d: "Aerul din zona ta, estimat din stațiile oficiale din București.",
+    s3t: "Îți spune ce să faci", s3d: "Direct pe ecran: seara, la culcare și dimineața. Fără aplicație. Noaptea nu emite lumină și nu face zgomot.",
     joinTitle: "Vrei să afli printre primii când e gata?",
-    joinSub: "Testăm prototipul în câteva dormitoare în această iarnă. Nu se vinde încă. Dacă testul iese bine, îți scriem primii.",
-    emailLabel: "Adresa de email", emailPh: "nume@exemplu.ro",
+    joinSub: "În această iarnă testăm prototipul în câteva dormitoare. Nu se vinde încă. Dacă testul merge bine, vei afla printre primii.",
+    emailLabel: "Adresa de e-mail", emailPh: "nume@exemplu.ro",
     forLabel: "Ce te interesează cel mai mult?", int1: "Aerul din dormitor", int2: "Smogul de afară", int3: "Camera copilului", int4: "Mucegai pe pereți sau pe geamuri",
     fact1: "Prețul nu e stabilit încă.",
-    fact2: "Se alimentează prin USB și folosește Wi-Fi-ul casei pentru aerul de afară.",
+    fact2: "Se alimentează prin USB și folosește Wi-Fi-ul de acasă ca să afle cum e aerul afară.",
     fact3: "Fără aplicație: sfatul apare pe ecranul de pe noptieră.",
-    alertOpt: "Trimite-mi și un e-mail în serile cu smog", cityLabel: "Pentru orașul",
-    consent: 'Sunt de acord să primesc e-mailuri de la Adia: vestea lansării, rar întrebări despre test și, dacă am bifat mai sus, alertele de smog. Întâi îți trimitem un e-mail de confirmare. Te poți dezabona oricând. <a href="confidentialitate.html">Cum folosim datele</a>',
+    alertOpt: "Trimite-mi și un e-mail în serile în care se anunță smog",
+    consent: 'Sunt de acord să primesc e-mailuri de la Adia: vestea lansării, ocazional câteva întrebări despre test și, dacă am bifat mai sus, alertele de smog. Mai întâi primesc un e-mail de confirmare și mă pot dezabona oricând. <a href="confidentialitate.html">Cum folosim datele</a>',
     submit: "Anunță-mă",
-    errEmail: "Scrie o adresă de email validă, de forma nume@exemplu.ro.",
-    errConsent: "Bifează acordul ca să-ți putem scrie.",
+    errEmail: "Introdu o adresă de e-mail validă, de exemplu nume@exemplu.ro.",
+    errConsent: "Bifează acordul, ca să-ți putem trimite e-mailuri.",
     preview: "Previzualizare: formularul nu trimite nimic aici. Funcționează pe site-ul publicat.",
-    thanks: "Aproape gata: ți-am trimis un e-mail. Apasă pe linkul de confirmare din el ca să intri pe listă.",
+    thanks: "Aproape gata: ți-am trimis un e-mail. Deschide-l și apasă pe linkul de confirmare ca să intri pe listă.",
     failed: "Nu am putut trimite formularul. Încearcă din nou peste un minut.",
-    priceQ: "O ultimă întrebare, opțională: cât ai plăti pe un astfel de dispozitiv?",
+    priceQ: "O ultimă întrebare, opțională: cât ai fi dispus să plătești pentru un astfel de dispozitiv?",
     p1: "sub 200 lei", p2: "200–350 lei", p3: "350–500 lei", p4: "peste 500 lei", p5: "Nu știu încă",
     priceSend: "Trimite răspunsul", priceErr: "Alege unul dintre răspunsuri.", priceThanks: "Mulțumim, ne ajută mult.",
     confirmed: "Gata, adresa ta e confirmată. Mulțumim!",
     foot: "Adia este un prototip în dezvoltare. Nu este un dispozitiv medical și nu tratează nicio boală.",
     src1: "Strøm-Tejsen, Zukowska, Wargocki, Wyon (2016), „The effects of bedroom air quality on sleep and next-day performance”, Indoor Air.",
     src2: `Date PM2.5: stațiile din București ale Rețelei Naționale de Monitorizare a Calității Aerului (ANPM), prin serviciul de date al ${EEA_LINK}Agenției Europene de Mediu</a> (licență ${CCBY_LINK}CC BY 4.0</a>); valori provizorii. Mediana orară a celor 23 de stații; nopțile dintre 20 octombrie și 18 noiembrie 2026, iar comparația dintre ore pe 20 octombrie – 19 noiembrie 2026.`,
-    src3: "Calculul CO₂: 13 litri de CO₂ pe oră pentru fiecare adult care doarme, cameră de 31 m³, 0,4 schimburi de aer pe oră cu geamul și ușa închise, 600 ppm la ora 23:00, aer exterior 420 ppm. Peste 1.500 ppm de la 00:40.",
-    co2Aria: "Calcul estimativ: CO₂ în dormitor crește de la 600 ppm la 23:00 la aproximativ 2.400 ppm la 07:00.",
+    src3: "Calculul CO₂: 13 litri de CO₂ pe oră pentru fiecare adult care doarme, cameră de 31 m³, 0,4 schimburi de aer pe oră cu geamul și ușa închise, 600 ppm la ora 23:00, aer exterior 420 ppm. Depășește 1.500 ppm de la 00:40.",
+    co2Aria: "Calcul estimativ: CO₂ din dormitor crește de la 600 ppm la 23:00 la aproximativ 2.400 ppm la 07:00.",
     nightAria: "În 6 din 29 de nopți au fost cel puțin 3 ore cu smog; cele mai multe între 8 și 13 noiembrie.",
-    ref1: "aer închis", ref2: "e timpul să aerisești",
+    ref0: "aer bun", ref1: "aer închis", ref2: "foarte închis",
     nightOf: (a, b) => `Noaptea de ${a} spre ${b}`, hSmog: n => `${n} ${n === 1 ? "oră" : "ore"} cu smog`, noSmog: "fără smog", peak: "maxim",
     allNight: "toată noaptea",
     months: ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "nov", "dec"],
@@ -402,61 +416,61 @@ const T = {
   },
   en: {
     pageTitle: "Adia",
-    kicker: "For bedrooms in Bucharest and Buzău",
+    kicker: "For bedrooms in Bucharest",
     h1a: "Window open or shut?",
     h1b: "At night, the answer changes from hour to hour.",
     lead: "Adia sits on your nightstand and tells you when to air the bedroom, and when to keep the window shut because of the smog outside.",
     cta: "Keep me posted",
     tag: "Prototype in testing, winter 2026–2027",
     m0: "Evening", m1: "Bedtime", m2: "Morning", moments: "Times of day",
-    devcap: "Example screen. At night, Adia makes no light and no sound.",
+    devcap: "Example screen. At night, Adia gives off no light and makes no sound.",
     pTitle: "At night, bedroom air has two enemies: CO₂ inside and smog outside",
     inWhere: "Inside",
     inTitle: "With the window and door shut, CO₂ rises all night.",
-    inStat: "CO₂ at 7 a.m. after 8 hours of sleep: almost 6 times as much as outside",
-    inCap: "Bedroom CO₂ from 23:00 to 07:00 (rough calculation)",
-    inNote: "Rough calculation: 2 adults, a 12 m² bedroom, window and door shut. In tighter rooms the value is higher. Adia measures the real value in your room.",
-    inStudy: 'A small Danish study found better sleep and better concentration the next day when the bedroom air was fresher.<sup><a href="#src-1">1</a></sup>',
+    inStat: "CO₂ at 07:00, after 8 hours of sleep: almost 6 times the level outside",
+    inCap: "Bedroom CO₂ from 23:00 to 07:00 (estimate)",
+    inNote: "Estimate: 2 adults, a 12 m² bedroom, window and door shut. In better-sealed rooms the value is higher. Adia measures the real value in your room.",
+    inStudy: 'A small Danish study found that people slept better and concentrated better the next day when the bedroom air was fresher.<sup><a href="#src-1">1</a></sup>',
     outWhere: "Outside",
     outTitle: "And if you open the window, smog can come in.",
     outStatB: "6 of 29 nights",
     outStat: "with smog outside for at least 3 hours between 22:00 and 07:00",
     outCap: "Hours of smog each night, Bucharest, 20 October – 18 November 2026",
-    outDef: "Smog = above 25 µg/m³ of fine particles (PM2.5), the median of Bucharest's 23 official stations.",
-    outNote: 'Five nights in a row, from 8 to 13 November, the smog lasted almost all night. Between 21:00 and 02:00, fine particles were on average 40% higher than between 10:00 and 17:00.<sup><a href="#src-2">2</a></sup>',
+    outDef: "Smog here means more than 25 µg/m³ of fine particles (PM2.5), as the median of Bucharest's 23 official stations.",
+    outNote: 'Five nights in a row, from 8 to 13 November, the smog lasted almost all night. Between 21:00 and 02:00, fine-particle levels were on average 40% higher than between 10:00 and 17:00.<sup><a href="#src-2">2</a></sup>',
     punchA: "Open the window and the smog comes in. Keep it shut and you breathe the same air all night.",
-    punchB: "Adia watches the air in the room and outside, and tells you what to do.",
+    punchB: "Adia keeps an eye on the air inside and outside, and tells you what to do.",
     cta2: "Keep me posted",
     howTitle: "How it works",
     s1t: "Measures", s1d: "CO₂, temperature and humidity in the bedroom, every minute.",
-    s2t: "Checks the air outside", s2d: "The air in your area, estimated from the official stations in Bucharest and Buzău.",
-    s3t: "Tells you what to do", s3d: "On its screen, in the evening, at bedtime and in the morning. No app. At night it makes no light and no sound.",
+    s2t: "Checks the air outside", s2d: "The air in your area, estimated from Bucharest's official stations.",
+    s3t: "Tells you what to do", s3d: "Right on its screen: in the evening, at bedtime and in the morning. No app needed. At night it gives off no light and makes no sound.",
     joinTitle: "Want to be among the first to know when it's ready?",
     joinSub: "We're testing the prototype in a few bedrooms this winter. It isn't for sale yet. If the test goes well, you'll hear from us first.",
     emailLabel: "Email address", emailPh: "name@example.com",
-    forLabel: "What interests you most?", int1: "Bedroom air", int2: "Smog outside", int3: "My child's room", int4: "Mold on walls or windows",
+    forLabel: "What interests you most?", int1: "Bedroom air", int2: "Smog outside", int3: "My child's room", int4: "Mould on walls or windows",
     fact1: "The price isn't set yet.",
-    fact2: "It runs on USB power and uses your home Wi-Fi for the outdoor air.",
-    fact3: "No app: the advice shows on the screen on your nightstand.",
-    alertOpt: "Also email me on evenings with smog", cityLabel: "For the city of",
-    consent: 'I agree to receive emails from Adia: the launch news, occasional questions about the test and, if ticked above, the smog alerts. We first send you a confirmation email. You can unsubscribe at any time. <a href="confidentialitate.html#en">How we use your data</a>',
+    fact2: "It runs on USB power and uses your home Wi-Fi to check the air outside.",
+    fact3: "No app: the advice appears right on the screen by your bed.",
+    alertOpt: "Also email me on evenings when smog is expected",
+    consent: 'I agree to receive emails from Adia: launch news, occasional questions about the test and, if ticked above, smog alerts. I will receive a confirmation email first and can unsubscribe at any time. <a href="confidentialitate.html#en">How we use your data</a>',
     submit: "Notify me",
     errEmail: "Enter a valid email address, like name@example.com.",
-    errConsent: "Tick the consent box so we can email you.",
+    errConsent: "Please tick the consent box so we can email you.",
     preview: "Preview: this form doesn't send anything here. It works on the published site.",
-    thanks: "Almost done: we've sent you an email. Click the confirmation link in it to join the list.",
-    failed: "The form couldn't be sent. Try again in a minute.",
+    thanks: "Almost done: we've sent you an email. Open it and click the confirmation link to join the list.",
+    failed: "Something went wrong and the form wasn't sent. Please try again in a minute.",
     priceQ: "One last question, optional: how much would you pay for a device like this?",
     p1: "under 200 lei", p2: "200–350 lei", p3: "350–500 lei", p4: "over 500 lei", p5: "Not sure yet",
-    priceSend: "Send my answer", priceErr: "Pick one of the answers.", priceThanks: "Thank you, that helps a lot.",
-    confirmed: "Done, your address is confirmed. Thank you!",
+    priceSend: "Send my answer", priceErr: "Please pick one of the answers.", priceThanks: "Thank you, that helps a lot.",
+    confirmed: "All set: your address is confirmed. Thank you!",
     foot: "Adia is a prototype in development. It is not a medical device and does not treat any condition.",
     src1: "Strøm-Tejsen, Zukowska, Wargocki, Wyon (2016), \"The effects of bedroom air quality on sleep and next-day performance\", Indoor Air.",
     src2: `PM2.5 data: Bucharest stations of Romania's National Air Quality Monitoring Network (ANPM), through the ${EEA_LINK}European Environment Agency</a>'s data service (${CCBY_LINK}CC BY 4.0</a> licence); provisional values. Hourly median of the 23 stations; nights from 20 October to 18 November 2026, and the comparison between hours over 20 October – 19 November 2026.`,
     src3: "CO₂ calculation: 13 litres of CO₂ per hour for each sleeping adult, a 31 m³ room, 0.4 air changes per hour with the window and door shut, 600 ppm at 23:00, outdoor air 420 ppm. Above 1,500 ppm from 00:40.",
-    co2Aria: "Rough calculation: bedroom CO₂ rises from 600 ppm at 23:00 to about 2,400 ppm at 07:00.",
+    co2Aria: "Estimate: bedroom CO₂ rises from 600 ppm at 23:00 to about 2,400 ppm at 07:00.",
     nightAria: "On 6 of 29 nights there were at least 3 hours of smog; most of them between 8 and 13 November.",
-    ref1: "stale air", ref2: "time to air the room",
+    ref0: "good", ref1: "stale", ref2: "very stale",
     nightOf: (a, b) => `Night of ${a} to ${b}`, hSmog: n => `${n} ${n === 1 ? "hour" : "hours"} of smog`, noSmog: "no smog", peak: "peak",
     allNight: "all night",
     months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
@@ -474,21 +488,21 @@ const V = {
           lead: "Adia sits on your nightstand, measures the air in the room and tells you when to air it. And when not to open the window, because there's smog outside." },
   },
   smog: {
-    ro: { h1a: "Smogul vine seara.", h1b: "În București, particulele fine ating maximul pe la 20–21, exact când aerisești înainte de culcare.",
-          lead: "Adia îți spune când e bine să deschizi geamul și când să-l ții închis, după stațiile oficiale din zona ta." },
-    en: { h1a: "Smog comes in the evening.", h1b: "In Bucharest, fine particles peak around 20:00–21:00, just when you air the room before bed.",
+    ro: { h1a: "Smogul vine seara.", h1b: "În București, particulele fine ating maximul în jurul orelor 20–21, exact când mulți aerisesc înainte de culcare.",
+          lead: "Adia îți spune când e bine să deschizi geamul și când să-l ții închis, pe baza stațiilor oficiale din zona ta." },
+    en: { h1a: "Smog comes in the evening.", h1b: "In Bucharest, fine particles peak around 20:00–21:00, just when many people air the room before bed.",
           lead: "Adia tells you when it's fine to open the window and when to keep it shut, using the official stations near you." },
   },
   copil: {
     ro: { h1a: "Ce aer respiră copilul tău noaptea?", h1b: "Cu ușa închisă, aerul din cameră se încarcă până dimineața. Iar afară poate fi smog.",
-          lead: "Adia stă pe noptieră, nu face lumină și nici zgomot, și îți spune când să aerisești camera și când să ții geamul închis." },
-    en: { h1a: "What air does your child breathe at night?", h1b: "With the door shut, the air in the room gets stale by morning. And outside there may be smog.",
-          lead: "Adia sits on the nightstand, makes no light and no sound, and tells you when to air the room and when to keep the window shut." },
+          lead: "Adia stă pe noptieră, nu emite lumină, nu face zgomot și îți spune când să aerisești camera și când să ții geamul închis." },
+    en: { h1a: "What is your child breathing at night?", h1b: "With the door shut, the room's air gets stale by morning. And outside, there may be smog.",
+          lead: "Adia sits on the nightstand, gives off no light, makes no sound and tells you when to air the room and when to keep the window shut." },
   },
   condens: {
-    ro: { h1a: "Geamuri aburite dimineața?", h1b: "E umezeala din dormitor. Aerisirea la timp o scoate afară, dar nu și când e smog.",
+    ro: { h1a: "Geamuri aburite dimineața?", h1b: "E umezeala din dormitor. O aerisire la momentul potrivit o scoate afară, doar că nu atunci când e smog.",
           lead: "Adia măsoară umiditatea și CO₂ din cameră și îți spune când să aerisești, ținând cont și de aerul de afară." },
-    en: { h1a: "Fogged-up windows in the morning?", h1b: "That's the moisture in your bedroom. Airing at the right time lets it out, but not when there's smog.",
+    en: { h1a: "Fogged-up windows in the morning?", h1b: "That's moisture from your bedroom. Airing at the right moment lets it out, just not when there's smog.",
           lead: "Adia measures the humidity and CO₂ in the room and tells you when to air it, taking the outdoor air into account." },
   },
 };
@@ -497,7 +511,7 @@ const text = l => ({ ...T[l], ...((V[AC.variant()] || {})[l] || {}) });
 // Example screens for the three advice moments (the morning one matches the calculation: above 1,500 ppm from 00:40)
 const SCREENS = [
   { time: "21:30", meta: { ro: "CO₂ 1.180 ppm", en: "CO₂ 1,180 ppm" }, label: { ro: "", en: "" },
-    big: { ro: "Aerisește 10 min", en: "Air the room 10 min" },
+    big: { ro: "Aerisește 10 min", en: "Air out for 10 min" },
     small: { ro: "Afară: aer bun · PM2.5 9", en: "Outside: good air · PM2.5 9" } },
   { time: "23:00", meta: { ro: "CO₂ 840 ppm", en: "CO₂ 840 ppm" }, label: { ro: "", en: "" },
     big: { ro: "Ține geamul închis", en: "Keep the window shut" },
@@ -573,6 +587,8 @@ function drawCo2() {
     el("line", { x1: x0, x2: x1, y1: Y(v), y2: Y(v), stroke: ref ? "var(--fg-2)" : "var(--line)", "stroke-width": 1, "stroke-dasharray": ref ? "4 4" : "" }, svg);
     el("text", { x: x0 - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 12, fill: "var(--muted)", "font-family": "var(--font-mono)" }, svg, fmt(v));
   }
+  // the three CO₂ levels (site.js): good below 1,000, stale up to 1,500, very stale above
+  el("text", { x: x1, y: Y(1000) + 17, "text-anchor": "end", "font-size": 13, fill: "var(--fg-2)" }, svg, T[lang].ref0);
   el("text", { x: x1, y: Y(1000) - 6, "text-anchor": "end", "font-size": 13, fill: "var(--fg-2)" }, svg, T[lang].ref1);
   el("text", { x: x1, y: Y(1500) - 6, "text-anchor": "end", "font-size": 13, fill: "var(--fg-2)" }, svg, T[lang].ref2);
   const pts = data.map(d => `${X(d.t).toFixed(1)},${Y(d.c).toFixed(1)}`);
@@ -583,6 +599,7 @@ function drawCo2() {
   for (const t of ticks) el("text", { x: X(t), y: H - 10, "text-anchor": t === 0 ? "start" : t === 8 ? "end" : "middle", "font-size": 12, fill: "var(--muted)", "font-family": "var(--font-mono)" }, svg, hourLabel(t));
   el("line", { x1: x0, x2: x1, y1: yBot, y2: yBot, stroke: "var(--line-strong)" }, svg);
   $("in-stat").textContent = "≈ " + fmt(Math.round(last.c / 100) * 100) + " ppm";
+  AC.co2Scale($("in-scale"), Math.round(last.c / 100) * 100, lang);
   // hover: crosshair + reading
   const cross = el("line", { y1: yTop, y2: yBot, stroke: "var(--fg-2)", "stroke-width": 1, visibility: "hidden" }, svg);
   const dot = el("circle", { r: 4, fill: "var(--co2)", stroke: "var(--panel)", "stroke-width": 2, visibility: "hidden" }, svg);
@@ -717,7 +734,6 @@ function say(key, kind, field, box = "msg") {
   if (box === "msg") for (const f of [$("email"), $("consent")]) { f.removeAttribute("aria-invalid"); f.removeAttribute("aria-describedby"); }
   if (field) { field.setAttribute("aria-invalid", "true"); field.setAttribute("aria-describedby", box); field.focus(); }
 }
-$("alerta").addEventListener("change", () => { $("city-row").hidden = !$("alerta").checked; });
 let signupId = "";
 $("join-form").addEventListener("submit", e => {
   e.preventDefault();
@@ -730,7 +746,7 @@ $("join-form").addEventListener("submit", e => {
   AC.post(f)
     .then(how => {
       say(how === "preview" ? "preview" : "thanks", "ok");
-      if (how === "sent") { f.reset(); $("city-row").hidden = true; }
+      if (how === "sent") f.reset();
       // the price question comes only after the email, so it can't put anyone off signing up
       const p = $("price-form"); p.elements["id"].value = signupId; p.elements["varianta"].value = AC.variant(); p.hidden = false;
     })
@@ -751,8 +767,8 @@ $("price-form").addEventListener("submit", e => {
 });
 if (AC.confirmed) $("confirmed").hidden = false;
 
-let start = "ro";
-try { start = localStorage.getItem("adia-lang") || "ro"; } catch (e) {}
+let start = "en";   // English unless the visitor picked Romanian (or the link ends in #ro)
+try { start = localStorage.getItem("adia-lang") || "en"; } catch (e) {}
 if (location.hash === "#en" || location.hash === "#ro") start = location.hash.slice(1);
-setLang(T[start] ? start : "ro", false);
+setLang(T[start] ? start : "en", false);
 </script>

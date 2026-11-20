@@ -84,24 +84,24 @@ const T = {
     pageTitle: "Cum estimăm aerul · Adia",
     back: "← Aerul de lângă tine",
     title: "Cum estimăm aerul",
-    lead: "Pagina „Aerul de lângă tine” nu are senzori proprii. Folosește măsurătorile stațiilor oficiale și o prognoză publică, le verifică și le combină. Aici găsești tot ce facem și cât de precis iese.",
+    lead: "Pagina „Aerul de lângă tine” nu are senzori proprii. Folosește măsurătorile stațiilor oficiale și o prognoză publică, le verifică și le combină. Aici găsești tot ce facem și cât de precise sunt rezultatele.",
     s: [
       ["De unde vin datele", [
         `<p><b>Măsurători:</b> stațiile Rețelei Naționale de Monitorizare a Calității Aerului, administrată de Agenția Națională pentru Protecția Mediului (ANPM). Le descărcăm de la ${EEA}Agenția Europeană de Mediu</a> (licență ${CCBY}). Sunt valori orare provizorii: ajung cu 1–3 ore întârziere, iar rețeaua le mai poate corecta ulterior.</p>`,
-        `<p><b>Prognoză:</b> modelul ${FMI}SILAM</a> al Institutului Meteorologic Finlandez (licență ${CCBY}), pentru câte un punct în fiecare oraș, cu două zile înainte.</p>`,
-        `<p><b>Zone:</b> București, cu particule fine (PM2.5), și Buzău, unde singura stație oficială măsoară doar PM10.</p>`,
+        `<p><b>Prognoză:</b> modelul ${FMI}SILAM</a> al Institutului Meteorologic Finlandez (licență ${CCBY}), pentru un punct din centrul Bucureștiului, cu două zile înainte.</p>`,
+        `<p><b>Zona:</b> deocamdată doar Bucureștiul. Sfatul se bazează pe particulele fine (PM2.5).</p>`,
         "{live:fresh}",
       ]],
-      ["Ce valori scoatem", [
-        "<p>Înainte de orice calcul, scoatem:</p>",
+      ["Ce valori eliminăm", [
+        "<p>Înainte de orice calcul, eliminăm:</p>",
         "<ul><li>valorile zero sau negative (de obicei o eroare de calibrare a aparatului);</li><li>valorile blocate pe aceeași cifră 6 ore sau mai mult (de obicei un aparat care nu mai măsoară);</li><li>vârfurile izolate: o valoare mai mare decât de 3 ori mediana stațiilor din oraș în acea oră, plus 30 µg/m³ (doar când avem cel puțin 3 stații în acea oră).</li></ul>",
         "{live:dropped}",
       ]],
       ["Valoarea de lângă tine", [
-        "<p>Facem o medie a stațiilor din orașul tău, în care fiecare stație contează cu atât mai mult cu cât e mai aproape: ponderea scade cu pătratul distanței, deci o stație la 1 km contează de 4 ori mai mult decât una la 2 km. Stațiile mai apropiate de 500 m sunt socotite la 500 m, ca să nu decidă una singură.</p>",
-        "<p>Locația ta nu pleacă din telefon: pagina descarcă datele pentru tot orașul și face calculul singură.</p>",
+        "<p>Facem o medie a stațiilor din oraș, în care fiecare stație contează cu atât mai mult cu cât e mai aproape: ponderea scade cu pătratul distanței, deci o stație la 1 km contează de 4 ori mai mult decât una la 2 km. Stațiile aflate la mai puțin de 500 m sunt considerate la 500 m, ca o singură stație să nu cântărească prea mult.</p>",
+        "<p>Locația ta rămâne în telefon: pagina descarcă datele pentru tot orașul și face calculul singură.</p>",
       ]],
-      ["Cât de precis e", [
+      ["Cât de precisă e estimarea", [
         "<p>Am testat metoda pe o lună (20 octombrie – 19 noiembrie 2026, PM2.5 orar, București). Am ascuns pe rând fiecare dintre cele 23 de stații oficiale și am estimat-o din celelalte, exact cum estimăm un punct fără stație.</p>",
         `<div class="tbl stack"><table><thead><tr><th scope="col">Ce am comparat</th><th scope="col" class="n">Potrivire (R²)</th><th scope="col" class="n">Eroare tipică</th></tr></thead><tbody>
           <tr><td>Estimarea noastră, la toate cele 23 de stații</td><td class="n">0,87</td><td class="n">3,7 µg/m³</td></tr>
@@ -109,39 +109,39 @@ const T = {
           <tr><td>… unde e mai departe de 2,5 km (8 stații)</td><td class="n">0,80</td><td class="n">5,9 µg/m³</td></tr>
           <tr><td>Pentru comparație: un senzor ieftin aflat lângă o stație oficială (valoarea tipică)</td><td class="n">0,68</td><td class="n">8,8 µg/m³</td></tr>
         </tbody></table></div>`,
-        "<p class=\"small\">R² arată cât de bine urmează estimarea valorile reale de la o oră la alta (1 = perfect). Eroarea tipică e abaterea medie pătratică (RMSE).</p>",
-        "<p>La pragul de smog, estimarea a prins 82% din orele cu smog ale stației ascunse și a dat alarmă falsă în 2,5% din orele fără smog.</p>",
-        "<p>Lângă prag, chiar și stațiile oficiale se contrazic: în orele în care una dintre două stații trece de 25 µg/m³, amândouă trec doar în cam 55–60% din cazuri. De aceea scriem „smog probabil”, nu „smog sigur”.</p>",
+        "<p class=\"small\">R² arată cât de bine urmează estimarea valorile reale de la o oră la alta (1 = perfect). Eroarea tipică este rădăcina erorii medii pătratice (RMSE).</p>",
+        "<p>La pragul de smog, estimarea a identificat corect 82% din orele cu smog ale stației ascunse și a dat alarmă falsă în 2,5% din orele fără smog.</p>",
+        "<p>Aproape de prag, chiar și stațiile oficiale dau rezultate diferite: în orele în care una dintre două stații depășește 25 µg/m³, amândouă îl depășesc doar în aproximativ 55–60% din cazuri. De aceea scriem „smog probabil”, nu „smog sigur”.</p>",
       ]],
-      ["Prognoza pentru la noapte", [
-        "<p>Pornim de la valoarea măsurată lângă tine și urmăm forma prognozei SILAM. Diferența dintre măsurătoare și prognoză se stinge treptat, în cam 6 ore.</p>",
-        "<p>Corectăm prognoza cu diferența ei tipică față de stații din ultima săptămână (mediana diferențelor, cel mult ±10 µg/m³). Păstrăm și cât de diferită e zona ta față de restul orașului în ultima zi, de exemplu lângă un bulevard aglomerat (între 0,6 și 1,6 ori).</p>",
+      ["Prognoza pentru noapte", [
+        "<p>Pornim de la valoarea măsurată lângă tine și urmăm forma prognozei SILAM. Diferența dintre măsurătoare și prognoză scade treptat și dispare în aproximativ 6 ore.</p>",
+        "<p>Corectăm prognoza cu diferența ei tipică față de stații din ultima săptămână (mediana diferențelor, cel mult ±10 µg/m³). Ținem cont și de cât de diferită a fost zona ta față de restul orașului în ultima zi, de exemplu lângă un bulevard aglomerat (între 0,6 și 1,6 ori).</p>",
         "{live:bias}",
-        "<p>Într-o lună de test, modelul SILAM nemodificat a avut nivelul aproape corect (în medie 0,97 din valoarea stațiilor), a prins 62% din orele cu smog și a dat alarmă falsă în 3% din orele fără smog. Am folosit primele ore ale fiecărei prognoze; la 12 ore sau mai mult înainte, prognoza e mai nesigură. Corecția noastră nu a fost încă testată pe o perioadă lungă: o verificăm în iarna aceasta.</p>",
+        "<p>Într-o lună de test, modelul SILAM nemodificat a avut nivelul aproape corect (în medie 0,97 din valoarea stațiilor), a anticipat 62% din orele cu smog și a dat alarmă falsă în 3% din orele fără smog. Am folosit primele ore ale fiecărei prognoze; la 12 ore sau mai mult înainte, prognoza e mai nesigură. Corecția noastră nu a fost încă testată pe o perioadă lungă: o verificăm în iarna aceasta.</p>",
       ]],
       ["Pragurile", [
         "<p>Adia folosește trei trepte pentru PM2.5: <b>bun</b> până la 15 µg/m³, <b>moderat</b> între 15 și 25 și <b>smog</b> peste 25. Le aplicăm fiecărei ore.</p>",
         "<p>Ca repere: Organizația Mondială a Sănătății recomandă cel mult 15 µg/m³ ca medie pe 24 de ore, iar limita zilnică a UE din 2030 e 25 µg/m³. Amândouă sunt medii pe zi, nu valori orare.</p>",
-        "<p>Pentru Buzău, unde avem doar PM10, folosim 20 și 30 µg/m³: la stațiile din București, PM2.5 e în medie cam 0,78 din PM10, așa că pragurile sunt aproximativ echivalente.</p>",
+        "<p>Dacă lipsesc datele PM2.5, folosim PM10, cu 20 și 30 µg/m³: la stațiile din București, PM2.5 reprezintă în medie circa 0,78 din PM10, așa că pragurile sunt aproximativ echivalente.</p>",
         "<p>Indicele european de calitate a aerului (6 trepte, de la „Bun” la „Extrem de rău”) apare separat, pentru comparație.</p>",
       ]],
       ["Calculatorul de CO₂ din dormitor", [
-        "<p>E un calcul, nu o măsurătoare: 13 litri de CO₂ pe oră pentru fiecare om care doarme, camera înaltă de 2,6 m, 0,4 schimburi de aer pe oră cu geamul închis, aer de afară cu 420 ppm, 600 ppm la culcare și 8 ore de somn. Cu ușa deschisă, adăugăm 50 m³ de aer din restul casei. În camerele renovate, cu geamuri etanșe, aerul se schimbă de obicei mai rar, iar valoarea e mai mare.</p>",
-        "<p>Adia măsoară valoarea reală din camera ta.</p>",
+        "<p>Este o estimare, nu o măsurătoare: 13 litri de CO₂ pe oră pentru fiecare persoană care doarme, camera înaltă de 2,6 m, 0,4 schimburi de aer pe oră cu geamul închis, aer de afară cu 420 ppm, 600 ppm la culcare și 8 ore de somn. Cu ușa deschisă, adăugăm 50 m³ de aer din restul casei. În camerele renovate, cu geamuri etanșe, aerul se schimbă de obicei mai rar, iar valoarea e mai mare.</p>",
+        "<p>Treptele pentru CO₂: <b>aer bun</b> sub 1.000 ppm, <b>aer închis</b> între 1.000 și 1.500 ppm și <b>foarte închis</b> peste 1.500 ppm. Aerul de afară are în jur de 420 ppm. Ca reper, Agenția de Mediu a Germaniei consideră aerul din interior fără probleme sub 1.000 ppm, cu nevoie de mai multă aerisire între 1.000 și 2.000 ppm și inacceptabil peste 2.000 ppm. Noi recomandăm aerisirea ceva mai devreme, de la 1.500 ppm.</p><p>Adia măsoară valoarea reală din camera ta.</p>",
       ]],
       ["Ce nu poate face", [
-        "<ul><li>Valorile sunt pentru aerul de afară. În cameră, cu geamul închis, intră mai puține particule, dar CO₂ se adună.</li><li>La marginile orașului stațiile sunt rare, iar eroarea e mai mare (vezi tabelul).</li><li>Datele sunt provizorii și pot avea goluri. Dacă ultima măsurătoare e mai veche de 4 ore te avertizăm; după 8 ore nu mai dăm niciun sfat.</li><li>Nu sunt sfaturi medicale. Dacă ai astm sau altă boală respiratorie, urmează sfatul medicului.</li></ul>",
+        "<ul><li>Valorile sunt pentru aerul de afară. În cameră, cu geamul închis, intră mai puține particule, dar CO₂ se adună.</li><li>La marginile orașului stațiile sunt rare, iar eroarea e mai mare (vezi tabelul).</li><li>Datele sunt provizorii și pot avea goluri. Dacă ultima măsurătoare e mai veche de 4 ore, te avertizăm; după 8 ore nu mai dăm niciun sfat.</li><li>Nu sunt sfaturi medicale. Dacă ai astm sau altă boală respiratorie, urmează sfatul medicului.</li></ul>",
       ]],
       ["Stațiile folosite acum", ["{live:stations}"]],
     ],
     fresh: "Datele se actualizează o dată pe oră. Ultima actualizare: {g} (ora României), cu măsurători până la {m}.",
-    dropped: "În ultima săptămână am scos {z} valori zero sau negative, {s} valori blocate și {p} vârfuri izolate.",
+    dropped: "În ultima săptămână am eliminat {z} valori zero sau negative, {s} valori blocate și {p} vârfuri izolate.",
     bias: "Corecția de acum: {list}.",
     biasItem: "{city} {v} µg/m³ {p}",
     stHead: ["Stația", "Tip", "Măsoară"],
     type: { traffic: "lângă trafic", background: "fond urban", industrial: "zonă industrială", other: "" },
-    city: { bucharest: "București", buzau: "Buzău" },
-    noData: "Datele de acum nu s-au putut încărca, așa că lipsesc cifrele actualizate de mai sus.",
+    city: { bucharest: "București" },
+    noData: "Nu am putut încărca datele actuale, așa că lipsesc cifrele actualizate de mai sus.",
   },
   en: {
     pageTitle: "How we estimate the air · Adia",
@@ -151,17 +151,17 @@ const T = {
     s: [
       ["Where the data comes from", [
         `<p><b>Measurements:</b> the stations of Romania's National Air Quality Monitoring Network, run by the National Environmental Protection Agency (ANPM). We download them from the ${EEA}European Environment Agency</a> (${CCBY} licence). They are provisional hourly values: they arrive 1–3 hours late, and the network may still correct them.</p>`,
-        `<p><b>Forecast:</b> the Finnish Meteorological Institute's ${FMI}SILAM</a> model (${CCBY} licence), for one point in each city, two days ahead.</p>`,
-        `<p><b>Areas:</b> Bucharest, with fine particles (PM2.5), and Buzău, where the only official station measures PM10 only.</p>`,
+        `<p><b>Forecast:</b> the Finnish Meteorological Institute's ${FMI}SILAM</a> model (${CCBY} licence), for one point in central Bucharest, two days ahead.</p>`,
+        `<p><b>Area:</b> Bucharest only, for now. The advice is based on fine particles (PM2.5).</p>`,
         "{live:fresh}",
       ]],
-      ["What we drop", [
-        "<p>Before any calculation, we drop:</p>",
+      ["What we filter out", [
+        "<p>Before any calculation, we filter out:</p>",
         "<ul><li>zero or negative values (usually a calibration error in the instrument);</li><li>values stuck on the same number for 6 hours or more (usually an instrument that stopped measuring);</li><li>isolated peaks: a value above 3 times the median of the city's stations that hour, plus 30 µg/m³ (only when at least 3 stations report that hour).</li></ul>",
         "{live:dropped}",
       ]],
       ["The value near you", [
-        "<p>We average the stations in your city, with each station counting more the closer it is: the weight falls with the square of the distance, so a station 1 km away counts 4 times as much as one 2 km away. Stations closer than 500 m are counted as 500 m away, so that no single one decides.</p>",
+        "<p>We average the city's stations, with each station counting more the closer it is: the weight falls with the square of the distance, so a station 1 km away counts 4 times as much as one 2 km away. Stations closer than 500 m are counted as 500 m away, so that no single station dominates.</p>",
         "<p>Your location never leaves your phone: the page downloads the data for the whole city and does the calculation itself.</p>",
       ]],
       ["How accurate it is", [
@@ -173,24 +173,24 @@ const T = {
           <tr><td>For comparison: a low-cost sensor next to an official station (typical value)</td><td class="n">0.68</td><td class="n">8.8 µg/m³</td></tr>
         </tbody></table></div>`,
         "<p class=\"small\">R² shows how well the estimate follows the real values from hour to hour (1 = perfect). The typical error is the root-mean-square error (RMSE).</p>",
-        "<p>At the smog limit, the estimate caught 82% of the hidden station's smog hours and gave a false alarm in 2.5% of the hours without smog.</p>",
+        "<p>At the smog limit, the estimate correctly flagged 82% of the hidden station's smog hours and gave a false alarm in 2.5% of the hours without smog.</p>",
         "<p>Near the limit, even official stations disagree: in the hours when one of two stations is above 25 µg/m³, both are above it only about 55–60% of the time. That's why we write “smog likely”, not “smog for sure”.</p>",
       ]],
       ["Tonight's forecast", [
         "<p>We start from the value measured near you and follow the shape of the SILAM forecast. The gap between measurement and forecast fades out over about 6 hours.</p>",
-        "<p>We correct the forecast by its typical gap to the stations over the last week (the median gap, at most ±10 µg/m³). We also keep how your area compares with the rest of the city over the last day, for example near a busy boulevard (between 0.6 and 1.6 times).</p>",
+        "<p>We correct the forecast by its typical gap to the stations over the last week (the median gap, at most ±10 µg/m³). We also take into account how your area compared with the rest of the city over the last day, for example near a busy boulevard (between 0.6 and 1.6 times).</p>",
         "{live:bias}",
-        "<p>In a month-long test, the unmodified SILAM model got the level nearly right (on average 0.97 of the stations' value), caught 62% of smog hours and gave a false alarm in 3% of the hours without smog. We used the first hours of each forecast; 12 hours or more ahead, the forecast is less certain. Our correction hasn't been tested over a long period yet: we are checking it this winter.</p>",
+        "<p>In a month-long test, the unmodified SILAM model got the level nearly right (on average 0.97 of the stations' value), predicted 62% of smog hours and gave a false alarm in 3% of the hours without smog. We used the first hours of each forecast; 12 hours or more ahead, the forecast is less certain. Our correction hasn't been tested over a long period yet: we are checking it this winter.</p>",
       ]],
       ["The limits", [
         "<p>Adia uses three levels for PM2.5: <b>good</b> up to 15 µg/m³, <b>moderate</b> from 15 to 25 and <b>smog</b> above 25. We apply them to every hour.</p>",
         "<p>For reference: the World Health Organization recommends at most 15 µg/m³ as a 24-hour average, and the EU daily limit from 2030 is 25 µg/m³. Both are daily averages, not hourly values.</p>",
-        "<p>For Buzău, where we only have PM10, we use 20 and 30 µg/m³: at the Bucharest stations, PM2.5 is on average about 0.78 of PM10, so the limits are roughly equivalent.</p>",
+        "<p>If the PM2.5 data is missing, we use PM10, with 20 and 30 µg/m³: at the Bucharest stations, PM2.5 is on average about 0.78 of PM10, so the limits are roughly equivalent.</p>",
         "<p>The European air quality index (6 levels, from “Good” to “Extremely poor”) is shown separately, for comparison.</p>",
       ]],
       ["The bedroom CO₂ calculator", [
-        "<p>It is a calculation, not a measurement: 13 litres of CO₂ per hour for each person asleep, a 2.6 m ceiling, 0.4 air changes per hour with the window shut, outdoor air at 420 ppm, 600 ppm at bedtime and 8 hours of sleep. With the door open, we add 50 m³ of air from the rest of the home. Renovated rooms with airtight windows usually change their air less often, so the value is higher.</p>",
-        "<p>Adia measures the real value in your room.</p>",
+        "<p>This is an estimate, not a measurement: 13 litres of CO₂ per hour for each person asleep, a 2.6 m ceiling, 0.4 air changes per hour with the window shut, outdoor air at 420 ppm, 600 ppm at bedtime and 8 hours of sleep. With the door open, we add 50 m³ of air from the rest of the home. Renovated rooms with airtight windows usually change their air less often, so the value is higher.</p>",
+        "<p>The CO₂ levels: <b>good</b> under 1,000 ppm, <b>stale</b> from 1,000 to 1,500 ppm and <b>very stale</b> over 1,500 ppm. Outdoor air is around 420 ppm. For reference, Germany's Environment Agency considers indoor air harmless under 1,000 ppm, in need of more airing from 1,000 to 2,000 ppm and unacceptable over 2,000 ppm. We suggest airing a little earlier, from 1,500 ppm.</p><p>Adia measures the real value in your room.</p>",
       ]],
       ["What it can't do", [
         "<ul><li>The values are for the outdoor air. With the window shut, fewer particles get into the room, but CO₂ builds up.</li><li>Stations are sparse at the edges of the city, so the error is larger there (see the table).</li><li>The data is provisional and can have gaps. If the latest measurement is more than 4 hours old we warn you; after 8 hours we give no advice.</li><li>This is not medical advice. If you have asthma or another respiratory condition, follow your doctor's advice.</li></ul>",
@@ -198,13 +198,13 @@ const T = {
       ["The stations in use now", ["{live:stations}"]],
     ],
     fresh: "The data is updated once an hour. Last update: {g} (Romanian time), with measurements up to {m}.",
-    dropped: "Over the last week we dropped {z} zero or negative values, {s} stuck values and {p} isolated peaks.",
+    dropped: "Over the last week we filtered out {z} zero or negative values, {s} stuck values and {p} isolated peaks.",
     bias: "The correction right now: {list}.",
     biasItem: "{city} {v} µg/m³ {p}",
     stHead: ["Station", "Type", "Measures"],
     type: { traffic: "near traffic", background: "urban background", industrial: "industrial area", other: "" },
-    city: { bucharest: "Bucharest", buzau: "Buzău" },
-    noData: "The current data couldn't be loaded, so the updated figures above are missing.",
+    city: { bucharest: "Bucharest" },
+    noData: "We couldn't load the current data, so the live figures above are missing.",
   },
 };
 
@@ -269,9 +269,9 @@ function setLang(l, save) {
 }
 document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang, true)));
 
-let start = AC.store.get("adia-lang") || "ro";
+let start = AC.store.get("adia-lang") || "en";   // English unless the visitor picked Romanian (or #ro)
 if (location.hash === "#en" || location.hash === "#ro") start = location.hash.slice(1);
-setLang(T[start] ? start : "ro", false);
+setLang(T[start] ? start : "en", false);
 fetch("data/air.json", { cache: "no-cache" })
   .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
   .then(d => { if (!d || !Array.isArray(d.stations) || !Array.isArray(d.areas)) throw new Error("bad data"); D = d; })

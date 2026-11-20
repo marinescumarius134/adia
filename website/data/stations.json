@@ -306,16 +306,5 @@
   "type": "background",
   "pm25": true,
   "pm10": true
- },
- {
-  "code": "RO0123A",
-  "name": "BZ-1",
-  "place": null,
-  "lat": 45.15361,
-  "lon": 26.81915,
-  "area": "buzau",
-  "type": "background",
-  "pm25": true,
-  "pm10": true
  }
 ]
