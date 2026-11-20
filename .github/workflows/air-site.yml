@@ -23,6 +23,10 @@ concurrency:
 
 jobs:
   build:
+    # On/off switch for the hourly runs: they only work once the repo is public and Pages is on, so they do nothing
+    # until the repository variable HOURLY is "on" (Settings -> Secrets and variables -> Actions -> Variables).
+    # "Run workflow" by hand always runs.
+    if: github.event_name != 'schedule' || vars.HOURLY == 'on'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
