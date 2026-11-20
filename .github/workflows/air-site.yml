@@ -1,0 +1,81 @@
+# Every hour: fetch the newest official readings and the SILAM forecast, publish data/air.json on GitHub Pages
+# (the Netlify site passes /data/* through to it), then send the smog-night emails if it's evening and smog is coming.
+# Setup (once): Settings -> Pages -> Source: "GitHub Actions"; for the alerts, the Brevo secret and variables below.
+name: air-site
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # every hour at :17 (GitHub may start it a few minutes late)
+  push:
+    branches: [main]
+    paths: ["website/air_job.py", "website/eea.py", "website/build.py", "website/smog_alert.py", "website/site.js",
+            "website/data/stations.json", ".github/workflows/air-site.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy polars requests
+      # if the official data can't be fetched, this step fails and the previous data stays online
+      - run: python website/air_job.py
+      - run: python website/build.py --data-host --out _pages
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _pages
+      - uses: actions/upload-artifact@v4
+        with:
+          name: air-json
+          path: website/data/air.json
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Acts only between 18:00 and 20:59 Romanian time, at most one email per city per day.
+  # Without the BREVO_API_KEY secret it just prints that alerts are off.
+  alert:
+    needs: deploy
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: air-json
+          path: website/data
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python website/smog_alert.py
+        env:
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          BREVO_SENDER_EMAIL: ${{ vars.BREVO_SENDER_EMAIL }}
+          BREVO_SENDER_NAME: ${{ vars.BREVO_SENDER_NAME }}
+          BREVO_LIST_SMOG_BUCURESTI: ${{ vars.BREVO_LIST_SMOG_BUCURESTI }}
+          BREVO_LIST_SMOG_BUZAU: ${{ vars.BREVO_LIST_SMOG_BUZAU }}
+          SITE_URL: ${{ vars.SITE_URL }}

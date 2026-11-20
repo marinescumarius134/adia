@@ -1,0 +1,31 @@
+# Public repository: an allowlist. Everything is ignored except the files the website and the hourly
+# job need to run. Anything new stays on this computer unless it is added below on purpose.
+/*
+!/.gitignore
+!/netlify.toml
+
+!/.github/
+/.github/*
+!/.github/workflows/
+/.github/workflows/*
+!/.github/workflows/air-site.yml
+
+!/website/
+/website/*
+!/website/landing.html
+!/website/aer-app.html
+!/website/metoda-app.html
+!/website/confidentialitate-app.html
+!/website/site.js
+!/website/build.py
+!/website/air_job.py
+!/website/eea.py
+!/website/smog_alert.py
+!/website/fonts/
+!/website/netlify/
+!/website/data/
+/website/data/*
+!/website/data/stations.json
+
+__pycache__/
+*.pyc

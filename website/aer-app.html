@@ -1,0 +1,740 @@
+<title>Aerul de lângă tine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Aerul de afară de lângă tine, acum și la noapte: când să aerisești și când să ții geamul închis. București și Buzău.">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Layout: one narrow app column. The action first (one 3-step scale: good to air / air briefly / keep it shut), then tonight, the chart, the nearest stations, the bedroom calculator that leads to Adia, and how it is calculated. */
+:root {
+  color-scheme: dark;
+  --bg: #0e1220; --panel: #161b2e; --line: #283052; --line-strong: #66719c; --fg: #eef0f6; --fg-2: #a9b0c6; --muted: #858ea8;
+  --accent: #f4a259; --on-accent: #1a1206; --focus: #8fb3ff; --err: #ff8f84;
+  --good: #3fbf6f; --warn: #f0b429; --bad: #ff6b5b; --none: #858ea8;
+  --good-bg: rgba(63, 191, 111, 0.13); --warn-bg: rgba(240, 180, 41, 0.13); --bad-bg: rgba(255, 107, 91, 0.14); --none-bg: rgba(133, 142, 168, 0.10);
+  --night: rgba(143, 179, 255, 0.07);
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #eef1f6; --panel: #ffffff; --line: #d3d8e4; --line-strong: #7a8299; --fg: #121726; --fg-2: #4a5268; --muted: #5c647d;
+    --accent: #a8520a; --on-accent: #ffffff; --focus: #2f5fd0; --err: #b42318;
+    --good: #1d8a4a; --warn: #a86b00; --bad: #d63a2c; --none: #5c647d;
+    --good-bg: rgba(29, 138, 74, 0.10); --warn-bg: rgba(240, 180, 41, 0.16); --bad-bg: rgba(214, 58, 44, 0.10); --none-bg: rgba(92, 100, 125, 0.08);
+    --night: rgba(47, 95, 208, 0.06);
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef1f6; --panel: #ffffff; --line: #d3d8e4; --line-strong: #7a8299; --fg: #121726; --fg-2: #4a5268; --muted: #5c647d;
+  --accent: #a8520a; --on-accent: #ffffff; --focus: #2f5fd0; --err: #b42318;
+  --good: #1d8a4a; --warn: #a86b00; --bad: #d63a2c; --none: #5c647d;
+  --good-bg: rgba(29, 138, 74, 0.10); --warn-bg: rgba(240, 180, 41, 0.16); --bad-bg: rgba(214, 58, 44, 0.10); --none-bg: rgba(92, 100, 125, 0.08);
+  --night: rgba(47, 95, 208, 0.06);
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 1.0625rem; line-height: 1.5; }
+.wrap { max-width: 820px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; line-height: 1.15; text-wrap: balance; letter-spacing: -0.01em; }
+p { margin: 0; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.top { display: flex; align-items: center; justify-content: space-between; padding-block: 18px; }
+.mark { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; min-height: 40px; }
+.mark i { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.lang { display: flex; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px; }
+.lang button { font: 600 0.85rem var(--font-mono); letter-spacing: 0.06em; color: var(--fg-2); background: none; border: 0; min-width: 44px; min-height: 36px; border-radius: 999px; cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--panel); color: var(--fg); }
+
+.app { display: grid; gap: 16px; padding-block: 8px 48px; }
+.place { display: grid; gap: 12px; padding-block: 8px 4px; }
+.place h1 { font-size: clamp(2rem, 6vw, 2.8rem); font-weight: 800; }
+.pick { display: flex; flex-wrap: wrap; gap: 8px; }
+.pick button, .pick select { font: 500 1rem var(--font-body); color: var(--fg); background: var(--panel); border: 1px solid var(--line-strong); border-radius: 10px; min-height: 44px; padding: 8px 14px; cursor: pointer; max-width: 100%; }
+.where { font-size: 0.95rem; color: var(--fg-2); min-height: 1.5em; }
+.where .note2 { display: block; margin-top: 4px; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: clamp(16px, 3.5vw, 26px); display: grid; gap: 12px; min-width: 0; }
+.card h2 { font-size: 1.2rem; font-weight: 700; }
+.card h2.label, .label { font: 600 0.8rem var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-2); }
+
+.now { border-width: 2px; }
+.now.good { border-color: var(--good); background: linear-gradient(var(--good-bg), var(--good-bg)), var(--panel); }
+.now.warn { border-color: var(--warn); background: linear-gradient(var(--warn-bg), var(--warn-bg)), var(--panel); }
+.now.bad { border-color: var(--bad); background: linear-gradient(var(--bad-bg), var(--bad-bg)), var(--panel); }
+.now.none { border-color: var(--line-strong); background: linear-gradient(var(--none-bg), var(--none-bg)), var(--panel); }
+.verdict { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font: 800 clamp(1.8rem, 5.5vw, 2.6rem) / 1.1 var(--font-display); letter-spacing: -0.01em; }
+.dot { display: inline-block; border-radius: 50%; flex: none; }
+.verdict .dot { width: 22px; height: 22px; }
+.good .dot, .dot.good { background: var(--good); } .warn .dot, .dot.warn { background: var(--warn); }
+.bad .dot, .dot.bad { background: var(--bad); } .none .dot, .dot.none { background: var(--none); }
+.do { font: 600 clamp(1.1rem, 3vw, 1.3rem) / 1.35 var(--font-body); }
+.facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 1rem; color: var(--fg-2); }
+.facts b { color: var(--fg); font-weight: 600; }
+
+.periods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.period { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; min-width: 0; }
+.period .when { font-size: 0.85rem; color: var(--fg-2); }
+.period .what { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.period .dot { width: 12px; height: 12px; }
+.tonight p.big { font: 600 1.15rem / 1.4 var(--font-body); }
+.tonight p.sub { color: var(--fg); font-size: 1rem; }
+.small { font-size: 0.9rem; color: var(--muted); }
+
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.9rem; color: var(--fg-2); }
+.key i { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid var(--fg); vertical-align: middle; margin-right: 6px; }
+.key i.fc { border-top-style: dashed; border-color: var(--fg-2); }
+.key i.zone { width: 12px; height: 12px; border: 0; border-radius: 2px; }
+.tip { position: absolute; pointer-events: none; background: var(--bg); color: var(--fg); border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 9px; font-size: 0.9rem; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -100%); }
+
+.stations { list-style: none; margin: 0; padding: 0; display: grid; }
+.stations li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line); }
+.stations li:first-child { border-top: 0; }
+.stations .dot { width: 12px; height: 12px; align-self: center; }
+.stations .nm { font-weight: 600; }
+.stations .sub2 { grid-column: 2 / 4; font-size: 0.9rem; color: var(--fg-2); }
+.stations .v { text-align: right; white-space: nowrap; }
+
+.bedroom { border-style: dashed; border-color: var(--line-strong); }
+.bedroom h2 { font-size: clamp(1.3rem, 3.6vw, 1.7rem); }
+.opts { display: grid; gap: 12px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.opt > span { min-width: 10em; color: var(--fg-2); }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; }
+.seg button { font: 500 1rem var(--font-body); color: var(--fg); background: transparent; border: 0; border-left: 1px solid var(--line-strong); min-height: 44px; min-width: 52px; padding: 0 14px; cursor: pointer; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.result { display: grid; gap: 2px; }
+.result b { font: 800 clamp(2rem, 6vw, 2.6rem) var(--font-display); letter-spacing: -0.02em; }
+.result span { color: var(--fg); }
+.btn { font: 600 1rem var(--font-body); color: var(--on-accent); background: var(--accent); border: 0; border-radius: 10px; padding: 13px 18px; text-decoration: none; display: inline-block; justify-self: start; }
+.note { font-size: 0.95rem; color: var(--fg-2); }
+.msg { padding: 14px 16px; border-radius: 12px; background: var(--warn-bg); border: 1px solid var(--warn); }
+
+details.method { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 4px clamp(16px, 3.5vw, 26px); }
+details.method summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+details.method ul { margin: 4px 0 12px; padding-left: 1.2em; display: grid; gap: 8px; color: var(--fg-2); }
+details.method .more { margin: 0 0 16px; }
+details.method .more a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
+
+.alert form { display: grid; gap: 12px; }
+.alert .row { display: flex; flex-wrap: wrap; gap: 8px; }
+.alert input[type="email"] { flex: 1 1 14rem; min-width: 0; font: 1rem var(--font-body); color: var(--fg); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; padding: 10px 14px; min-height: 44px; }
+.alert input::placeholder { color: var(--muted); opacity: 1; }
+.alert select { font: 1rem var(--font-body); color: var(--fg); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; padding: 8px 12px; min-height: 44px; }
+.alert .btn { border: 0; cursor: pointer; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.92rem; color: var(--fg-2); }
+.check input { width: 20px; height: 20px; flex: none; margin: 1px 0 0; accent-color: var(--accent); }
+.fmsg { font-size: 0.95rem; min-height: 1.4em; }
+.fmsg.err { color: var(--err); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+footer { border-top: 1px solid var(--line); padding-block: 22px 36px; display: grid; gap: 8px; font-size: 0.95rem; color: var(--fg-2); }
+@media (max-width: 560px) { .opt > span { min-width: 100%; } .period { padding: 8px 9px; } }
+</style>
+
+<header class="top wrap">
+  <a class="mark" href="index.html"><i aria-hidden="true"></i>Adia</a>
+  <div class="lang" role="group" aria-label="Limba / Language">
+    <button type="button" id="lang-ro" data-lang="ro" aria-pressed="true">RO</button>
+    <button type="button" id="lang-en" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<main class="wrap app">
+  <section class="place">
+    <h1 data-i18n="title">Aerul de lângă tine</h1>
+    <div class="pick">
+      <button type="button" id="locate" data-i18n="locate">Folosește locația mea</button>
+      <label class="vh" for="spot" data-i18n="spotLabel">Zona</label>
+      <select id="spot"></select>
+    </div>
+    <p class="where" id="where" aria-live="polite"></p>
+  </section>
+
+  <div id="problem" class="msg" role="status" hidden></div>
+
+  <section class="card now none" id="now" aria-labelledby="now-h">
+    <h2 class="label" id="now-h" data-i18n="nowLabel">Afară, acum</h2>
+    <p class="verdict" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="verdict">…</span></p>
+    <p class="do" id="do"></p>
+    <ul class="facts" id="facts"></ul>
+  </section>
+
+  <section class="card tonight" id="tonight" aria-labelledby="tonight-h">
+    <h2 class="label" id="tonight-h" data-i18n="tonightLabel">La noapte</h2>
+    <div class="periods" id="periods"></div>
+    <p class="big" id="t-big"></p>
+    <p class="sub" id="t-sub"></p>
+    <p class="small" data-i18n="fcNote">Prognoza poate greși, mai ales la câteva ore distanță. Uită-te din nou seara.</p>
+  </section>
+
+  <section class="card alert" aria-labelledby="alert-h">
+    <h2 id="alert-h" data-i18n="alertTitle">Vrei un e-mail în serile cu smog?</h2>
+    <p class="note" data-i18n="alertSub">Îl trimitem seara, în jur de ora 18, doar când prognoza arată smog la noapte. Cel mult unul pe zi.</p>
+    <form id="alert-form" name="alerta" method="POST" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+      <input type="hidden" name="form-name" value="alerta">
+      <input type="hidden" name="varianta"><input type="hidden" name="sursa"><input type="hidden" name="limba"><input type="hidden" name="id">
+      <p class="hp" aria-hidden="true"><label>Nu completa / leave empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+      <div class="row">
+        <label class="vh" for="a-email" data-i18n="emailLabel">Adresa de email</label>
+        <input type="email" id="a-email" name="email" autocomplete="email" placeholder="nume@exemplu.ro" required>
+        <label class="vh" for="a-oras" data-i18n="cityLabel">Orașul</label>
+        <select id="a-oras" name="oras"><option value="bucuresti">București</option><option value="buzau">Buzău</option></select>
+        <button class="btn" type="submit" id="a-submit" data-i18n="alertSubmit">Trimite-mi alertele</button>
+      </div>
+      <label class="check" for="a-lista"><input type="checkbox" id="a-lista" name="lista" value="da"><span data-i18n="alertAlso">Anunță-mă și când apare Adia</span></label>
+      <label class="check" for="a-consent"><input type="checkbox" id="a-consent" name="consent" value="da"><span data-i18n-html="alertConsent">Sunt de acord să primesc e-mailuri de la Adia.</span></label>
+      <p class="fmsg" id="a-msg" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="chart-h">
+    <h2 id="chart-h" data-i18n="chartTitle">Ultimele 24 de ore și următoarele 36</h2>
+    <div class="chart" id="chart"></div>
+    <div class="key" id="key"></div>
+  </section>
+
+  <section class="card" aria-labelledby="st-h">
+    <h2 id="st-h" data-i18n="stTitle">Stațiile oficiale cele mai apropiate</h2>
+    <ul class="stations" id="stations"></ul>
+  </section>
+
+  <section class="card bedroom" aria-labelledby="bed-title">
+    <div class="label" data-i18n="bedLabel">Înăuntru</div>
+    <h2 id="bed-title" data-i18n="bedTitle">Aerul de afară e doar jumătate din poveste. Ce respiri în dormitor?</h2>
+    <div class="opts">
+      <div class="opt"><span id="o-people" data-i18n="optPeople">Câți dormiți în cameră</span><div class="seg" role="group" aria-labelledby="o-people" data-k="people"><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="true">2</button><button type="button" data-v="3" aria-pressed="false">3</button></div></div>
+      <div class="opt"><span id="o-room" data-i18n="optRoom">Mărimea camerei</span><div class="seg" role="group" aria-labelledby="o-room" data-k="room"><button type="button" data-v="9" aria-pressed="false">9 m²</button><button type="button" data-v="12" aria-pressed="true">12 m²</button><button type="button" data-v="16" aria-pressed="false">16 m²</button></div></div>
+      <div class="opt"><span id="o-door" data-i18n="optDoor">Ușa camerei noaptea</span><div class="seg" role="group" aria-labelledby="o-door" data-k="door"><button type="button" data-v="shut" aria-pressed="true" data-i18n="doorShut">închisă</button><button type="button" data-v="open" aria-pressed="false" data-i18n="doorOpen">deschisă</button></div></div>
+    </div>
+    <div class="result" aria-live="polite"><b class="num" id="co2">≈ 2.400 ppm</b><span id="co2-say"></span></div>
+    <p class="note" data-i18n="bedNote">Calcul estimativ pentru 8 ore de somn cu geamul închis, nu o măsurătoare. Fiecare cameră e diferită; în camerele mai etanșe valoarea e mai mare.</p>
+    <a class="btn" href="index.html#join" data-i18n="bedCta">Adia îți arată cât CO₂ ai de fapt. Anunță-mă când apare</a>
+  </section>
+
+  <details class="method">
+    <summary data-i18n="mTitle">Cum calculăm</summary>
+    <ul id="method"></ul>
+    <p class="more"><a href="metoda.html" data-i18n="mMore">Toate detaliile și cifrele de precizie →</a></p>
+  </details>
+</main>
+
+<footer class="wrap">
+  <p id="fresh"></p>
+  <p data-i18n-html="credit"></p>
+  <p data-i18n="privacy">Locația ta rămâne în telefon: pagina descarcă datele pentru tot orașul și alege singură punctul cel mai apropiat.</p>
+  <p data-i18n="disclaimer">Informații orientative despre aerul de afară. Nu sunt sfaturi medicale.</p>
+  <p id="site-line"></p>
+</footer>
+
+<script src="site.js"></script>
+<script>
+const DATA_URL = "data/air.json";
+const SPOTS = [
+  { key: "buc", ro: "București, centru", en: "Bucharest, centre", lat: 44.4268, lon: 26.1025 },
+  { key: "s1", ro: "București, Sectorul 1", en: "Bucharest, Sector 1", lat: 44.485, lon: 26.07 },
+  { key: "s2", ro: "București, Sectorul 2", en: "Bucharest, Sector 2", lat: 44.455, lon: 26.13 },
+  { key: "s3", ro: "București, Sectorul 3", en: "Bucharest, Sector 3", lat: 44.42, lon: 26.15 },
+  { key: "s4", ro: "București, Sectorul 4", en: "Bucharest, Sector 4", lat: 44.375, lon: 26.115 },
+  { key: "s5", ro: "București, Sectorul 5", en: "Bucharest, Sector 5", lat: 44.4, lon: 26.06 },
+  { key: "s6", ro: "București, Sectorul 6", en: "Bucharest, Sector 6", lat: 44.435, lon: 26.025 },
+  { key: "bz", ro: "Buzău", en: "Buzău", lat: 45.15, lon: 26.82 },
+];
+const EAQI_RO = { "Good": "Bun", "Fair": "Acceptabil", "Moderate": "Moderat", "Poor": "Rău", "Very poor": "Foarte rău", "Extremely poor": "Extrem de rău" };
+const NAME = { pm25: "PM2.5", pm10: "PM10" };
+const MAX_KM = 50;       // farther than this from every station: no advice
+const STALE_H = 4;       // warn when the newest reading is older than this (normally 1-3 h)
+const DEAD_H = 8;        // no advice when it is older than this
+
+const T = {
+  ro: {
+    pageTitle: "Aerul de lângă tine · Adia",
+    title: "Aerul de lângă tine", locate: "Folosește locația mea", spotLabel: "Zona", nowLabel: "Afară, acum",
+    tonightLabel: "La noapte", chartTitle: "Ultimele 24 de ore și următoarele 36",
+    stTitle: "Stațiile oficiale cele mai apropiate", stTitle1: "Stația oficială cea mai apropiată",
+    bedLabel: "Înăuntru", bedTitle: "Aerul de afară e doar jumătate din poveste. Ce respiri în dormitor?",
+    optPeople: "Câți dormiți în cameră", optRoom: "Mărimea camerei", optDoor: "Ușa camerei noaptea", doorShut: "închisă", doorOpen: "deschisă",
+    bedNote: "Calcul estimativ pentru 8 ore de somn cu geamul închis, nu o măsurătoare. Fiecare cameră e diferită; în camerele mai etanșe valoarea e mai mare.",
+    bedCta: "Adia îți arată cât CO₂ ai de fapt. Anunță-mă când apare",
+    fcNote: "Prognoza poate greși, mai ales la câteva ore distanță. Uită-te din nou seara.",
+    credit: 'Date: stațiile Rețelei Naționale de Monitorizare a Calității Aerului (ANPM), prin <a href="https://www.eea.europa.eu/en/legal-notice" target="_blank" rel="noopener">Agenția Europeană de Mediu</a>, licență <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY</a>; valori provizorii, încă neverificate de rețea. Prognoză: Institutul Meteorologic Finlandez, modelul <a href="https://silam.fmi.fi/" target="_blank" rel="noopener">SILAM</a> (licență CC BY 4.0). Ajustăm prognoza după stațiile din zonă.',
+    privacy: "Locația ta rămâne în telefon: pagina descarcă datele pentru tot orașul și alege singură punctul cel mai apropiat.",
+    disclaimer: "Informații orientative despre aerul de afară. Nu sunt sfaturi medicale.",
+    vGood: "Poți aerisi", vWarn: "Aerisește scurt", vBad: "Ține geamul închis", vNone: "Nu avem date recente", vOut: "Zonă neacoperită",
+    noAreaData: "Nu avem măsurători recente pentru {a}. Revino mai târziu.",
+    dGood: "Aerul de afară e bun acum.", dWarn: "Aerul de afară e moderat poluat: 5 minute, apoi închide geamul.", dBad: "Afară e smog.",
+    dNone: "Ultima măsurătoare e prea veche ca să-ți dăm un sfat. Revino mai târziu.",
+    factValue: "{p}: <b>{v} µg/m³</b> (pragul Adia: bun sub {a}, smog peste {b})",
+    factWhen: "Măsurat între {a} și {b}, {ago} · valori provizorii",
+    factIndex: "Indicele european: <b>{i}</b> ({n} din 6)",
+    ago0: "acum mai puțin de o oră", ago1: "acum o oră", agoN: n => `acum ${n} ${n % 100 >= 20 ? "de " : ""}ore`,
+    pEvening: "Seara, până la 22", pNight: "Noaptea, 22–07", pMorning: "Dimineața, 07–10", pNow: "Până la 07",
+    lv: { good: "bun", warn: "moderat", bad: "smog", none: "fără date" },
+    nightGood: "Aer bun toată noaptea.", nightGoodSub: "Afară rămâne bine: poți lăsa geamul întredeschis.",
+    nightWarn: "Aer moderat la noapte, mai ales între {a} și {b}.", nightBad: "Smog probabil la noapte, între {a} și {b}.",
+    nightWarnAll: "Aer moderat toată noaptea.", nightBadAll: "Smog probabil toată noaptea.", shutAll: "Ține geamul închis și seara, și noaptea.",
+    shutNight: "Noaptea, ține geamul închis.",
+    bestAt: "Cel mai bun moment să aerisești: {a}–{b}.", anyTime: "Poți aerisi oricând până la 22:00.",
+    shortAt: "Dacă aerisești, fă-o scurt, pe la {a}.", noAir: "Și seara e mai bine să ții geamul închis.",
+    noForecast: "Prognoza nu e disponibilă acum.", noForecastSub: "Uită-te la valoarea de acum înainte să deschizi geamul.",
+    measured: "măsurat", forecast: "prognoză", nowLine: "acum", night: "noapte",
+    zGood: "bun ≤ {a}", zWarn: "moderat", zBad: "smog > {b} µg/m³ {p}",
+    near: "{p} · {n} · cea mai apropiată: {s}, la {d} km",
+    stations: n => (n === 1 ? "estimat dintr-o singură stație oficială" : `estimat din ${n} ${n % 100 >= 20 || n === 0 ? "de " : ""}stații oficiale`),
+    pm10only: "În Buzău există o singură stație oficială. Ea măsoară particulele PM10, nu și pe cele fine (PM2.5), așa că sfatul e mai aproximativ.",
+    outside: "Acoperim deocamdată doar Bucureștiul și Buzăul. Cea mai apropiată stație e la {d} km. Alege o zonă din listă.",
+    gpsAsk: "Caut locația…", gpsNo: "Browserul nu a dat locația. Alege zona din listă.", myPlace: "Locația mea",
+    loadFail: "Nu am putut încărca datele. Încearcă din nou peste câteva minute.",
+    stale: "Ultima măsurătoare din zonă e de {ago}: valorile pot fi depășite.",
+    fresh: "Măsurători până la {m} · pagină actualizată la {g} (ora României).",
+    co2Mult: r => (r % 1 < 0.5 ? `de peste ${Math.floor(r)} ori` : `de aproape ${Math.ceil(r)} ori`) + " mai mult CO₂ decât afară", co2Ok: "aer bun dimineața",
+    co2Stale: "aer închis dimineața", co2Bad: "aer închis: e timpul să aerisești de mult",
+    km: "km", type: { traffic: "lângă trafic", background: "fond urban", industrial: "zonă industrială", other: "" },
+    stAt: "la {a}–{b}",
+    chartAria: "{p}: în ultimele 24 de ore între {lo} și {hi} µg/m³. Prognoză pentru următoarele 36 de ore: cel mult {fmax} µg/m³, pe la {fat}.",
+    chartAriaNoFc: "{p}: în ultimele 24 de ore între {lo} și {hi} µg/m³. Fără prognoză.",
+    alertTitle: "Vrei un e-mail în serile cu smog?",
+    alertSub: "Îl trimitem seara, în jur de ora 18, doar când prognoza arată smog la noapte. Cel mult unul pe zi.",
+    emailLabel: "Adresa de email", cityLabel: "Orașul", emailPh: "nume@exemplu.ro",
+    alertSubmit: "Trimite-mi alertele", alertAlso: "Anunță-mă și când apare Adia",
+    alertConsent: 'Sunt de acord să primesc de la Adia alertele de smog și, dacă am bifat, vestea lansării. Întâi îți trimitem un e-mail de confirmare. Te poți dezabona oricând. <a href="confidentialitate.html">Cum folosim datele</a>',
+    errEmail: "Scrie o adresă de email validă, de forma nume@exemplu.ro.", errConsent: "Bifează acordul ca să-ți putem scrie.",
+    preview: "Previzualizare: formularul nu trimite nimic aici. Funcționează pe site-ul publicat.",
+    thanks: "Aproape gata: ți-am trimis un e-mail. Apasă pe linkul de confirmare din el ca să primești alertele.",
+    failed: "Nu am putut trimite formularul. Încearcă din nou peste un minut.",
+    mMore: "Toate detaliile și cifrele de precizie →",
+    mTitle: "Cum calculăm",
+    method: [
+      "Valoarea de lângă tine e o medie a stațiilor oficiale din zonă, în care stațiile mai apropiate contează mai mult. În teste pe o lună, eroarea tipică a fost de circa 4 µg/m³ în interiorul rețelei de stații; la marginea orașului e mai mare.",
+      "Măsurătorile ajung cu 2–3 ore întârziere și sunt provizorii. Scoatem valorile zero sau negative, cele blocate pe aceeași cifră 6 ore și vârfurile izolate mult peste stațiile vecine.",
+      "Prognoza vine de la modelul SILAM, corectat cu diferența tipică față de stații din ultima săptămână și pornit de la valoarea măsurată lângă tine. Modelul brut a prins aproximativ 6 din 10 ore cu smog într-o lună de test; corecția noastră nu a fost încă testată pe o perioadă lungă.",
+      "Pragurile Adia pentru PM2.5: bun sub 15 µg/m³, smog peste 25 (aceeași cifră ca limita zilnică pe care UE o impune din 2030, dar noi o aplicăm pe ore). Indicele european de calitate a aerului are 6 trepte și e afișat separat.",
+      "În Buzău se măsoară doar PM10. Folosim 20 și 30 µg/m³, pentru că, la stațiile din București, PM2.5 e în medie cam 0,78 din PM10.",
+    ],
+  },
+  en: {
+    pageTitle: "The air near you · Adia",
+    title: "The air near you", locate: "Use my location", spotLabel: "Area", nowLabel: "Outside, now",
+    tonightLabel: "Tonight", chartTitle: "The last 24 hours and the next 36",
+    stTitle: "Nearest official stations", stTitle1: "Nearest official station",
+    bedLabel: "Inside", bedTitle: "Outdoor air is only half the story. What are you breathing in the bedroom?",
+    optPeople: "People sleeping in the room", optRoom: "Room size", optDoor: "Bedroom door at night", doorShut: "shut", doorOpen: "open",
+    bedNote: "A rough calculation for 8 hours of sleep with the window shut, not a measurement. Every room is different; in tighter rooms the value is higher.",
+    bedCta: "Adia shows how much CO₂ you really have. Keep me posted",
+    fcNote: "The forecast can be wrong, especially a few hours ahead. Check again in the evening.",
+    credit: 'Data: stations of Romania\'s National Air Quality Monitoring Network (ANPM), through the <a href="https://www.eea.europa.eu/en/legal-notice" target="_blank" rel="noopener">European Environment Agency</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY</a> licence; provisional values, not yet checked by the network. Forecast: Finnish Meteorological Institute, <a href="https://silam.fmi.fi/" target="_blank" rel="noopener">SILAM</a> model (CC BY 4.0 licence). We adjust the forecast to the local stations.',
+    privacy: "Your location stays on your phone: the page downloads the data for the whole city and picks the nearest point itself.",
+    disclaimer: "General information about outdoor air. Not medical advice.",
+    vGood: "You can air the room", vWarn: "Air the room briefly", vBad: "Keep the window shut", vNone: "No recent data", vOut: "Area not covered",
+    noAreaData: "We have no recent measurements for {a}. Check back later.",
+    dGood: "The air outside is good right now.", dWarn: "The air outside is moderately polluted: 5 minutes, then shut the window.", dBad: "There is smog outside.",
+    dNone: "The last measurement is too old to give you advice. Check back later.",
+    factValue: "{p}: <b>{v} µg/m³</b> (Adia limits: good below {a}, smog above {b})",
+    factWhen: "Measured between {a} and {b}, {ago} · provisional values",
+    factIndex: "European index: <b>{i}</b> ({n} of 6)",
+    ago0: "less than an hour ago", ago1: "1 hour ago", agoN: n => `${n} hours ago`,
+    pEvening: "Evening, until 22", pNight: "Night, 22–07", pMorning: "Morning, 07–10", pNow: "Until 07",
+    lv: { good: "good", warn: "moderate", bad: "smog", none: "no data" },
+    nightGood: "Good air all night.", nightGoodSub: "It stays fine outside: you can leave the window open a crack.",
+    nightWarn: "Moderate air tonight, mostly between {a} and {b}.", nightBad: "Smog likely tonight, between {a} and {b}.",
+    nightWarnAll: "Moderate air all night.", nightBadAll: "Smog likely all night.", shutAll: "Keep the window shut this evening and tonight.",
+    shutNight: "At night, keep the window shut.",
+    bestAt: "Best time to air the room: {a}–{b}.", anyTime: "You can air the room any time until 22:00.",
+    shortAt: "If you air the room, keep it short, around {a}.", noAir: "Better to keep the window shut this evening too.",
+    noForecast: "The forecast isn't available right now.", noForecastSub: "Check the current value before you open the window.",
+    measured: "measured", forecast: "forecast", nowLine: "now", night: "night",
+    zGood: "good ≤ {a}", zWarn: "moderate", zBad: "smog > {b} µg/m³ {p}",
+    near: "{p} · {n} · nearest: {s}, {d} km away",
+    stations: n => (n === 1 ? "estimated from a single official station" : `estimated from ${n} official stations`),
+    pm10only: "Buzău has a single official station. It measures PM10 particles, not the fine ones (PM2.5), so the advice is rougher.",
+    outside: "We only cover Bucharest and Buzău for now. The nearest station is {d} km away. Pick an area from the list.",
+    gpsAsk: "Finding your location…", gpsNo: "The browser didn't share your location. Pick an area from the list.", myPlace: "My location",
+    loadFail: "The data couldn't be loaded. Try again in a few minutes.",
+    stale: "The latest measurement here is from {ago}: the values may be out of date.",
+    fresh: "Measurements up to {m} · page updated at {g} (Romanian time).",
+    co2Mult: r => (r % 1 < 0.5 ? `more than ${Math.floor(r)} times` : `almost ${Math.ceil(r)} times`) + " as much CO₂ as outside", co2Ok: "good air in the morning",
+    co2Stale: "stale air in the morning", co2Bad: "stale air: well past the point to air the room",
+    km: "km", type: { traffic: "near traffic", background: "urban background", industrial: "industrial area", other: "" },
+    stAt: "at {a}–{b}",
+    chartAria: "{p}: between {lo} and {hi} µg/m³ over the last 24 hours. Forecast for the next 36 hours: at most {fmax} µg/m³, around {fat}.",
+    chartAriaNoFc: "{p}: between {lo} and {hi} µg/m³ over the last 24 hours. No forecast.",
+    alertTitle: "Want an email on evenings with smog?",
+    alertSub: "We send it in the evening, around 18:00, only when the forecast shows smog tonight. At most one a day.",
+    emailLabel: "Email address", cityLabel: "City", emailPh: "name@example.com",
+    alertSubmit: "Send me the alerts", alertAlso: "Also tell me when Adia launches",
+    alertConsent: 'I agree to receive the smog alerts from Adia and, if ticked, the launch news. We first send you a confirmation email. You can unsubscribe at any time. <a href="confidentialitate.html#en">How we use your data</a>',
+    errEmail: "Enter a valid email address, like name@example.com.", errConsent: "Tick the consent box so we can email you.",
+    preview: "Preview: this form doesn't send anything here. It works on the published site.",
+    thanks: "Almost done: we've sent you an email. Click the confirmation link in it to start getting the alerts.",
+    failed: "The form couldn't be sent. Try again in a minute.",
+    mMore: "All the details and accuracy figures →",
+    mTitle: "How we calculate",
+    method: [
+      "The value near you is an average of the official stations in the area, with closer stations counting more. In a month of tests the typical error was about 4 µg/m³ inside the station network; it is larger at the edge of the city.",
+      "Measurements arrive 2–3 hours late and are provisional. We drop zero or negative values, values stuck on the same number for 6 hours, and isolated peaks far above the neighbouring stations.",
+      "The forecast comes from the SILAM model, corrected by its typical gap to the stations over the last week and started from the value measured near you. The raw model caught about 6 in 10 smog hours in a month-long test; our correction hasn't been tested over a long period yet.",
+      "Adia limits for PM2.5: good below 15 µg/m³, smog above 25 (the same number as the EU daily limit from 2030, but we apply it hour by hour). The European air quality index has 6 levels and is shown separately.",
+      "Buzău only measures PM10. We use 20 and 30 µg/m³, because at the Bucharest stations PM2.5 is on average about 0.78 of PM10.",
+    ],
+  },
+};
+
+let D = null, lang = "ro", place = null, failed = false, bed = { people: 2, room: 12, door: "shut" }, last = null;
+const $ = id => document.getElementById(id);
+const fill = (s, o) => s.replace(/\{(\w+)\}/g, (_, k) => (o[k] ?? ""));
+const nf = (v, d = 0) => (v == null || !isFinite(v) ? "–" : v.toLocaleString(lang === "ro" ? "ro-RO" : "en-GB", { minimumFractionDigits: d, maximumFractionDigits: d }));
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function km(a, b, c, d) {
+  const r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(x));
+}
+const t0 = () => Date.parse(D.start);
+const timeOf = j => new Date(t0() + j * 3600e3);
+const fmts = {};
+function fmtH(d, o, loc) {
+  const l = loc || (lang === "ro" ? "ro-RO" : "en-GB"), k = l + JSON.stringify(o);
+  return (fmts[k] ||= new Intl.DateTimeFormat(l, { timeZone: "Europe/Bucharest", hourCycle: "h23", ...o })).format(d);
+}
+const localHour = j => Number(fmtH(timeOf(j), { hour: "2-digit" }, "en-GB"));
+const hh = j => fmtH(timeOf(j), { hour: "2-digit", minute: "2-digit" });
+const day = j => fmtH(timeOf(j), { weekday: "short" });
+function ago(ms) {
+  const L = T[lang], m = Math.max(0, ms) / 60000;
+  if (m < 60) return L.ago0;
+  const n = Math.round(m / 60);
+  return n === 1 ? L.ago1 : L.agoN(n);
+}
+const lim = P => D.limits[P];
+function level(v, P) { return v == null ? "none" : v > lim(P)[1] ? "bad" : v > lim(P)[0] ? "warn" : "good"; }
+const worse = (a, b) => (["none", "good", "warn", "bad"].indexOf(a) >= ["none", "good", "warn", "bad"].indexOf(b) ? a : b);
+function bandOf(v, P) {
+  const i = D.bands[P].findIndex(([hi]) => hi === null || v <= hi);
+  return { i, name: lang === "ro" ? EAQI_RO[D.bands[P][i][1]] : D.bands[P][i][1] };
+}
+function stationLabel(s) { return /\s/.test(s.name) || !s.place ? s.name : `${s.name} · ${s.place}`; }
+
+/* ---------- the estimate for one place ---------- */
+function estimate(lat, lon) {
+  const all = D.stations.map(s => ({ s, d: km(lat, lon, s.lat, s.lon) })).sort((x, y) => x.d - y.d);
+  const city = D.areas.map(a => ({ a, d: km(lat, lon, a.lat, a.lon) })).sort((x, y) => x.d - y.d)[0];
+  if (!city || city.d > city.a.radius_km + MAX_KM - 15) return { outside: all.length ? all[0].d : city ? city.d : Infinity };
+  const A = city.a, P = A.pollutant;
+  const st = all.filter(x => x.s.area === A.name && x.s[P]);
+  const n = st.length ? st[0].s[P].length : 0;
+  const obs = [], med = [];
+  for (let i = 0; i < n; i++) {
+    let num = 0, den = 0; const here = [];
+    for (const { s, d } of st) {
+      const v = s[P][i]; if (v == null) continue;
+      const w = 1 / Math.max(d, 0.5) ** 2; num += w * v; den += w; here.push(v);
+    }
+    obs.push(den ? num / den : null);
+    here.sort((a, b) => a - b);
+    med.push(here.length ? (here.length % 2 ? here[(here.length - 1) / 2] : (here[here.length / 2 - 1] + here[here.length / 2]) / 2) : null);
+  }
+  let L = n - 1; while (L >= 0 && obs[L] == null) L--;
+  // how this spot compares with the area's median over the last day (a lasting local difference)
+  let so = 0, sm = 0; for (let i = Math.max(0, n - 24); i < n; i++) if (obs[i] != null && med[i] != null) { so += obs[i]; sm += med[i]; }
+  const ratio = sm > 0 ? Math.min(Math.max(so / sm, 0.6), 1.6) : 1;
+  const F = A.forecast && A.forecast[P], b = (A.bias && A.bias[P]) || 0;
+  const len = F ? F.length : n;
+  const est = Array.from({ length: len }, (_, j) => {
+    if (j <= L) return obs[j] ?? null;
+    if (!F || F[j] == null || L < 0) return null;
+    const base = j2 => ratio * Math.max(0, F[j2] + b);
+    const start = F[L] != null ? base(L) : obs[L];
+    return Math.max(0, base(j) + (obs[L] - start) * Math.exp(-(j - L) / 6));   // starts at the measured value, the gap fades over ~6 h
+  });
+  const ageMs = L >= 0 ? Date.now() - (t0() + (L + 1) * 3600e3) : Infinity;
+  return { A, P, st, obs, L, est, F: !!F, ageMs };
+}
+function curIndex() { return Math.floor((Date.now() - t0()) / 3600e3); }
+
+/* ---------- render ---------- */
+function render() {
+  if (!D || !place) return;
+  try { draw(); } catch (err) { console.error(err); showNone(T[lang].loadFail); }
+}
+
+function showNone(text, verdict) {
+  const card = $("now"); card.className = "card now none";
+  $("verdict").textContent = verdict || T[lang].vNone; $("do").textContent = text || T[lang].dNone; $("facts").innerHTML = "";
+  $("periods").innerHTML = ""; $("t-big").textContent = ""; $("t-sub").textContent = "";
+  $("chart").innerHTML = ""; $("key").innerHTML = ""; $("stations").innerHTML = "";
+}
+
+function draw() {
+  const L = T[lang];
+  const e = estimate(place.lat, place.lon);
+  $("problem").hidden = true;
+  if (e.outside != null) { $("where").textContent = fill(L.outside, { d: nf(e.outside) }); showNone(fill(L.outside, { d: nf(e.outside) }), L.vOut); $("where").textContent = ""; return; }
+  last = e;
+  if (!cityTouched) $("a-oras").value = e.A.name === "buzau" ? "buzau" : "bucuresti";   // the alert form follows the chosen area
+  const P = e.P, cur = curIndex();
+  const n = e.st.length, near = e.st[0];
+  $("where").innerHTML = esc(n ? fill(L.near, { p: place.label, n: L.stations(n), s: stationLabel(near.s), d: nf(near.d, 1) }) : place.label) +
+    (P === "pm10" ? `<span class="note2">${esc(L.pm10only)}</span>` : "");
+  if (e.L < 0) { showNone(fill(L.noAreaData, { a: e.A.label })); nearest(e); return; }
+  if (e.ageMs > DEAD_H * 3600e3) { showNone(); nearest(e); return; }
+  if (e.ageMs > STALE_H * 3600e3) { $("problem").hidden = false; $("problem").textContent = fill(L.stale, { ago: ago(e.ageMs) }); }
+
+  const v = e.obs[e.L], lv = level(v, P), band = bandOf(v, P);
+  $("now").className = "card now " + lv;
+  $("verdict").textContent = { good: L.vGood, warn: L.vWarn, bad: L.vBad }[lv];
+  $("do").textContent = { good: L.dGood, warn: L.dWarn, bad: L.dBad }[lv];
+  $("facts").innerHTML =
+    `<li>${fill(L.factValue, { p: NAME[P], v: nf(v), a: lim(P)[0], b: lim(P)[1] })}</li>` +
+    `<li>${esc(fill(L.factWhen, { a: hh(e.L), b: hh(e.L + 1), ago: ago(e.ageMs) }))}</li>` +
+    `<li>${fill(L.factIndex, { i: esc(band.name), n: band.i + 1 })}</li>`;
+
+  tonight(e, cur);
+  drawChart(e, cur);
+  nearest(e);
+  $("fresh").textContent = fill(L.fresh, { m: hh(e.L + 1), g: fmtH(new Date(D.generated), { hour: "2-digit", minute: "2-digit" }) });
+}
+
+function tonight(e, cur) {
+  const L = T[lang], P = e.P, [good, smog] = lim(P);
+  const box = $("periods");
+  const usable = e.F && cur >= 0 && cur < e.est.length && e.est.slice(cur).some(x => x != null);
+  if (!usable) { box.innerHTML = ""; $("t-big").textContent = L.noForecast; $("t-sub").textContent = L.noForecastSub; return; }
+  const find = (from, test) => { for (let j = from; j < e.est.length; j++) if (test(localHour(j))) return j; return -1; };
+  const inNight = h => h >= 22 || h < 7;
+  const range = (a, b) => { const r = []; for (let j = Math.max(a, 0); j < Math.min(b, e.est.length); j++) if (e.est[j] != null) r.push(j); return r; };
+  const nightStarted = inNight(localHour(cur));
+  const nStart = nightStarted ? cur : find(cur, h => h === 22);
+  const nEnd = nStart < 0 ? -1 : find(nStart, h => h === 7);
+  if (nStart < 0 || nEnd < 0) { box.innerHTML = ""; $("t-big").textContent = L.noForecast; $("t-sub").textContent = L.noForecastSub; return; }
+  const evening = nightStarted ? [] : range(cur, nStart), night = range(nStart, nEnd), morning = range(nEnd, nEnd + 3);
+  if (!night.length) { box.innerHTML = ""; $("t-big").textContent = L.noForecast; $("t-sub").textContent = L.noForecastSub; return; }
+  const lvOf = js => js.length ? js.map(j => level(e.est[j], P)).reduce(worse, "none") : "none";
+  const periods = [];
+  if (!nightStarted) periods.push([L.pEvening, lvOf(evening)]);
+  periods.push([nightStarted ? L.pNow : L.pNight, lvOf(night)], [L.pMorning, lvOf(morning)]);
+  box.innerHTML = periods.map(([w, l]) => `<div class="period"><span class="when">${esc(w)}</span><span class="what"><span class="dot ${l}" aria-hidden="true"></span>${esc(L.lv[l])}</span></div>`).join("");
+
+  // when to air before the night: only an hour that is actually good, otherwise say so
+  let airTxt = "";
+  if (evening.length) {
+    const goodH = evening.filter(j => e.est[j] <= good), okH = evening.filter(j => e.est[j] <= smog);
+    if (goodH.length === evening.length) airTxt = L.anyTime;
+    else if (goodH.length) { const j = goodH.reduce((x, y) => (e.est[y] < e.est[x] ? y : x)); airTxt = fill(L.bestAt, { a: hh(j), b: hh(j + 1) }); }
+    else if (okH.length) { const j = okH.reduce((x, y) => (e.est[y] < e.est[x] ? y : x)); airTxt = fill(L.shortAt, { a: hh(j) }); }
+    else airTxt = L.noAir;
+  }
+  const nl = lvOf(night), bad = night.filter(j => level(e.est[j], P) === "bad"), warn = night.filter(j => level(e.est[j], P) !== "good");
+  const whole = list => list.length === night.length;
+  const shutTxt = airTxt === L.noAir ? L.shutAll : [airTxt, L.shutNight].filter(Boolean).join(" ");
+  if (nl === "bad") {
+    $("t-big").textContent = whole(bad) ? L.nightBadAll : fill(L.nightBad, { a: hh(bad[0]), b: hh(bad.at(-1) + 1) });
+    $("t-sub").textContent = shutTxt;
+  } else if (nl === "warn") {
+    $("t-big").textContent = whole(warn) ? L.nightWarnAll : fill(L.nightWarn, { a: hh(warn[0]), b: hh(warn.at(-1) + 1) });
+    $("t-sub").textContent = shutTxt;
+  } else {
+    $("t-big").textContent = L.nightGood;
+    $("t-sub").textContent = [airTxt, L.nightGoodSub].filter(Boolean).join(" ");
+  }
+}
+
+const NS = "http://www.w3.org/2000/svg";
+function el(name, attrs, parent, text) {
+  const n = document.createElementNS(NS, name);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  parent && parent.appendChild(n);
+  return n;
+}
+
+function drawChart(e, cur) {
+  const box = $("chart"), L = T[lang], P = e.P, [good, smog] = lim(P);
+  box.innerHTML = "";
+  const now = Math.min(Math.max(cur, e.L), e.est.length - 1);
+  const j0 = Math.max(0, now - 24), j1 = Math.min(e.est.length - 1, now + 36);
+  if (j1 <= j0) return;
+  const vals = e.est.slice(j0, j1 + 1).filter(v => v != null);
+  // drawn at the box's own width, so 13 px text stays 13 px on a phone
+  const W = Math.max(240, Math.round(box.clientWidth || 600)), H = 230, x0 = 34, x1 = W - 8, yTop = 14, yBot = 196;
+  const top = Math.max(smog * 1.6, ...vals) * 1.08;
+  const X = j => x0 + (j - j0) / (j1 - j0) * (x1 - x0), Y = v => yBot - Math.min(v, top) / top * (yBot - yTop);
+  const past = e.est.slice(j0, e.L + 1).filter(v => v != null), fut = e.est.slice(e.L + 1, j1 + 1).map((v, i) => [v, e.L + 1 + i]).filter(([v]) => v != null);
+  if (!past.length) return;
+  const fmax = fut.length ? fut.reduce((a, b) => (b[0] > a[0] ? b : a)) : null;
+  const aria = fut.length
+    ? fill(L.chartAria, { p: NAME[P], lo: nf(Math.min(...past)), hi: nf(Math.max(...past)), fmax: nf(fmax[0]), fat: `${day(fmax[1])} ${hh(fmax[1])}` })
+    : fill(L.chartAriaNoFc, { p: NAME[P], lo: nf(Math.min(...past)), hi: nf(Math.max(...past)) });
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": aria }, box);
+  el("rect", { x: x0, y: Y(good), width: x1 - x0, height: yBot - Y(good), fill: "var(--good-bg)" }, svg);
+  el("rect", { x: x0, y: Y(smog), width: x1 - x0, height: Y(good) - Y(smog), fill: "var(--warn-bg)" }, svg);
+  el("rect", { x: x0, y: yTop, width: x1 - x0, height: Y(smog) - yTop, fill: "var(--bad-bg)" }, svg);
+  const step = (x1 - x0) / (j1 - j0);
+  for (let j = j0; j <= j1; j++) { const h = localHour(j); if (h >= 22 || h < 7) el("rect", { x: X(j) - step / 2, y: yTop, width: step, height: yBot - yTop, fill: "var(--night)" }, svg); }
+  for (const v of [good, smog]) {
+    el("line", { x1: x0, x2: x1, y1: Y(v), y2: Y(v), stroke: "var(--line-strong)", "stroke-dasharray": "3 4" }, svg);
+    el("text", { x: x0 - 6, y: Y(v) + 4, "text-anchor": "end", "font-size": 12, fill: "var(--muted)", "font-family": "var(--font-mono)" }, svg, v);
+  }
+  for (let j = j0; j <= j1; j++) {
+    const h = localHour(j);
+    if (h === 0 || h === 12) {
+      el("line", { x1: X(j), x2: X(j), y1: yBot, y2: yBot + 4, stroke: "var(--muted)" }, svg);
+      el("text", { x: X(j), y: H - 12, "text-anchor": "middle", "font-size": 13, fill: "var(--fg-2)" }, svg, h === 0 ? day(j) : "12:00");
+    }
+  }
+  el("line", { x1: x0, x2: x1, y1: yBot, y2: yBot, stroke: "var(--line-strong)" }, svg);
+  const path = (from, to) => {
+    let d = "", pen = false;
+    for (let j = from; j <= to; j++) { const v = e.est[j]; if (v == null) { pen = false; continue; } d += `${pen ? "L" : "M"}${X(j).toFixed(1)},${Y(v).toFixed(1)} `; pen = true; }
+    return d;
+  };
+  el("path", { d: path(j0, e.L), fill: "none", stroke: "var(--fg)", "stroke-width": 2.5, "stroke-linejoin": "round" }, svg);
+  if (e.F) el("path", { d: path(e.L, j1), fill: "none", stroke: "var(--fg-2)", "stroke-width": 2.5, "stroke-dasharray": "6 5", "stroke-linejoin": "round" }, svg);
+  el("line", { x1: X(now), x2: X(now), y1: yTop, y2: yBot, stroke: "var(--accent)", "stroke-width": 1.5 }, svg);
+  el("text", { x: X(now) + 5, y: yTop + 13, "font-size": 13, fill: "var(--accent)", "font-weight": 600 }, svg, L.nowLine);
+  // hover
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  const cross = el("line", { y1: yTop, y2: yBot, stroke: "var(--fg-2)", visibility: "hidden" }, svg);
+  const hit = el("rect", { x: x0, y: yTop, width: x1 - x0, height: yBot - yTop, fill: "transparent" }, svg);
+  const move = ev => {
+    const r = svg.getBoundingClientRect(), sx = (ev.clientX - r.left) / r.width * W;
+    const j = Math.round(j0 + (sx - x0) / (x1 - x0) * (j1 - j0));
+    if (j < j0 || j > j1 || e.est[j] == null) { tip.hidden = true; return; }
+    cross.setAttribute("x1", X(j)); cross.setAttribute("x2", X(j)); cross.setAttribute("visibility", "visible");
+    tip.hidden = false;
+    tip.textContent = `${day(j)} ${hh(j)}–${hh(j + 1)} · ${nf(e.est[j])} µg/m³ · ${j <= e.L ? L.measured : L.forecast}`;
+    const bx = box.getBoundingClientRect();
+    tip.style.left = Math.min(Math.max(r.left - bx.left + X(j) / W * r.width, 110), bx.width - 110) + "px";
+    tip.style.top = (r.top - bx.top + Y(e.est[j]) / H * r.height - 10) + "px";
+  };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+  $("key").innerHTML = `<span><i aria-hidden="true"></i>${L.measured}</span>` + (e.F ? `<span><i class="fc" aria-hidden="true"></i>${L.forecast}</span>` : "") +
+    `<span><i class="zone" aria-hidden="true" style="background:var(--good-bg);outline:1px solid var(--good)"></i>${fill(L.zGood, { a: good })}</span>` +
+    `<span><i class="zone" aria-hidden="true" style="background:var(--warn-bg);outline:1px solid var(--warn)"></i>${L.zWarn}</span>` +
+    `<span><i class="zone" aria-hidden="true" style="background:var(--bad-bg);outline:1px solid var(--bad)"></i>${fill(L.zBad, { b: smog, p: NAME[P] })}</span>` +
+    `<span><i class="zone" aria-hidden="true" style="background:var(--night);outline:1px solid var(--line-strong)"></i>${L.night}</span>`;
+}
+
+function nearest(e) {
+  const L = T[lang], P = e.P, ul = $("stations"), list = e.st.slice(0, 4);
+  $("st-h").textContent = list.length === 1 ? L.stTitle1 : L.stTitle;
+  ul.innerHTML = "";
+  for (const { s, d } of list) {
+    let i = s[P].length - 1; while (i >= 0 && s[P][i] == null) i--;
+    const v = i >= 0 ? s[P][i] : null, lv = level(v, P), li = document.createElement("li");
+    const when = i >= 0 && i !== e.L ? " · " + fill(L.stAt, { a: hh(i), b: hh(i + 1) }) : "";
+    li.innerHTML = `<span class="dot ${lv}" aria-hidden="true"></span><span class="nm">${esc(stationLabel(s))}</span>` +
+      `<span class="v num">${v == null ? "–" : nf(v) + " µg/m³"}</span>` +
+      `<span class="sub2">${esc([L.type[s.type] || "", nf(d, 1) + " " + L.km, L.lv[lv] + when].filter(Boolean).join(" · "))}</span>`;
+    ul.appendChild(li);
+  }
+}
+
+/* ---------- bedroom CO2 (same model as the home page: 13 L CO2/h per sleeper, 0.4 air changes/h) ---------- */
+function co2() {
+  const V = bed.room * 2.6 + (bed.door === "open" ? 50 : 0), a = 0.4, G = bed.people * 0.013, c0 = 600, out = 420;
+  const css = out + G / (a * V) * 1e6, c = css + (c0 - css) * Math.exp(-a * 8);
+  const r = Math.round(c / 100) * 100, L = T[lang];
+  $("co2").textContent = "≈ " + nf(r) + " ppm";
+  $("co2-say").textContent = L.co2Mult(c / out) + " · " + (r < 1000 ? L.co2Ok : r <= 1500 ? L.co2Stale : L.co2Bad);
+}
+document.querySelectorAll(".seg").forEach(seg => seg.addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  bed[seg.dataset.k] = isNaN(b.dataset.v) ? b.dataset.v : Number(b.dataset.v);
+  co2();
+}));
+
+/* ---------- smog alert sign-up (Netlify Forms; Brevo sends the confirmation email and the alerts) ---------- */
+let cityTouched = false;
+$("a-oras").addEventListener("change", () => { cityTouched = true; });
+function aSay(key, kind, field) {
+  const m = $("a-msg");
+  m.dataset.key = key; m.className = "fmsg " + kind; m.textContent = T[lang][key];
+  for (const f of [$("a-email"), $("a-consent")]) { f.removeAttribute("aria-invalid"); f.removeAttribute("aria-describedby"); }
+  if (field) { field.setAttribute("aria-invalid", "true"); field.setAttribute("aria-describedby", "a-msg"); field.focus(); }
+}
+$("alert-form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const f = $("alert-form");
+  if (!AC.emailOk($("a-email").value)) { aSay("errEmail", "err", $("a-email")); return; }
+  if (!$("a-consent").checked) { aSay("errConsent", "err", $("a-consent")); return; }
+  $("a-email").value = $("a-email").value.trim();
+  AC.stamp(f, lang);
+  $("a-submit").disabled = true;
+  AC.post(f)
+    .then(how => { aSay(how === "preview" ? "preview" : "thanks", "ok"); if (how === "sent") f.reset(); })
+    .catch(() => aSay("failed", "err"))
+    .finally(() => { $("a-submit").disabled = false; });
+});
+
+/* ---------- place ---------- */
+function fillSpots() {
+  const sel = $("spot");
+  sel.innerHTML = "";
+  for (const s of SPOTS) sel.add(new Option(s[lang], s.key));
+  if (place && place.key === "gps") sel.add(new Option(T[lang].myPlace, "gps"));
+  sel.value = place ? place.key : "buc";
+}
+function setSpot(key) {
+  const s = SPOTS.find(x => x.key === key) || SPOTS[0];
+  place = { key: s.key, lat: s.lat, lon: s.lon, label: s[lang] };
+  store.set("adia-spot", s.key);
+  fillSpots(); render();
+}
+$("spot").addEventListener("change", ev => { if (ev.target.value !== "gps") setSpot(ev.target.value); });
+$("locate").addEventListener("click", () => {
+  const L = T[lang];
+  if (!navigator.geolocation) { $("where").textContent = L.gpsNo; return; }
+  $("where").textContent = L.gpsAsk;
+  navigator.geolocation.getCurrentPosition(pos => {
+    place = { key: "gps", lat: pos.coords.latitude, lon: pos.coords.longitude, label: T[lang].myPlace };
+    fillSpots(); render();
+  }, () => { $("where").textContent = T[lang].gpsNo; }, { timeout: 10000, maximumAge: 600000 });
+});
+
+/* ---------- language ---------- */
+function setLang(l, save) {
+  lang = l;
+  document.documentElement.lang = l;
+  document.title = T[l].pageTitle;
+  document.querySelectorAll("[data-i18n]").forEach(n => { n.textContent = T[l][n.dataset.i18n]; });
+  document.querySelectorAll("[data-i18n-html]").forEach(n => { n.innerHTML = T[l][n.dataset.i18nHtml]; });
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === l)));
+  $("method").innerHTML = T[l].method.map(m => `<li>${esc(m)}</li>`).join("");
+  $("a-email").placeholder = T[l].emailPh;
+  $("site-line").innerHTML = AC.siteLine(l);
+  if ($("a-msg").dataset.key) $("a-msg").textContent = T[l][$("a-msg").dataset.key];
+  if (place) place.label = place.key === "gps" ? T[l].myPlace : (SPOTS.find(s => s.key === place.key) || SPOTS[0])[l];
+  fillSpots(); co2();
+  AC.carry();   // keeps ?m= and ?src= on the links to our other pages
+  if (failed) { $("problem").hidden = false; $("problem").textContent = T[l].loadFail; } else render();
+  if (save) {
+    store.set("adia-lang", l);
+    try { if (location.hash) history.replaceState(null, "", "#" + l); } catch (e) {}
+  }
+}
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang, true)));
+
+let resizeTimer = null;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (last && D) drawChart(last, curIndex()); }, 150); });
+
+/* ---------- start ---------- */
+let start = store.get("adia-lang") || "ro";
+if (location.hash === "#en" || location.hash === "#ro") start = location.hash.slice(1);
+const spot0 = SPOTS.find(s => s.key === store.get("adia-spot")) || SPOTS[0];
+place = { key: spot0.key, lat: spot0.lat, lon: spot0.lon, label: spot0[start] || spot0.ro };
+setLang(T[start] ? start : "ro", false);
+fetch(DATA_URL, { cache: "no-cache" })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(d => { if (!d || !Array.isArray(d.stations) || !d.limits) throw new Error("bad data"); D = d; })
+  .then(() => render(), () => { failed = true; showNone(T[lang].loadFail); $("problem").hidden = false; $("problem").textContent = T[lang].loadFail; });
+</script>

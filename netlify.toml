@@ -1,0 +1,15 @@
+# Netlify: the site (pages, forms, and the function that passes sign-ups to Brevo).
+# The hourly data does NOT come from here: GitHub Pages publishes it and the site proxies /data/* to it
+# (website/build.py writes that rule from the DATA_URL variable). So Netlify only deploys when website/
+# changes, which matters because each production deploy costs 15 of the free plan's 300 monthly credits.
+[build]
+  base = "website"
+  command = "python3 build.py --out _site"
+  publish = "_site"
+  functions = "netlify/functions"
+  # Skip the deploy when nothing the site uses changed (exit 0 = skip). The data job and the alert script run
+  # on GitHub, so changing them alone doesn't redeploy. The first build (no cached commit yet) always runs.
+  ignore = "test -n \"$CACHED_COMMIT_REF\" && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)air_job.py' ':(exclude)smog_alert.py' ':(exclude)README.md' ':(exclude)email'"
+
+[functions]
+  node_bundler = "esbuild"

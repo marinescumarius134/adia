@@ -1,0 +1,3 @@
+Bricolage Grotesque (Mathieu Triay), IBM Plex Sans and IBM Plex Mono (IBM Corp.)
+are licensed under the SIL Open Font License, Version 1.1: https://openfontlicense.org
+The files here are unmodified web subsets (latin, latin-ext) as served by Google Fonts.

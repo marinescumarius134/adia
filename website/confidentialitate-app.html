@@ -1,0 +1,194 @@
+<title>Confidențialitate · Adia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Ce date colectează site-ul Adia, de ce, cât timp le păstrăm și ce drepturi ai.">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Layout: one reading column; short sections; the data table scrolls inside its box on small screens. */
+:root {
+  color-scheme: dark;
+  --bg: #0e1220; --panel: #161b2e; --line: #283052; --line-strong: #66719c; --fg: #eef0f6; --fg-2: #a9b0c6; --muted: #858ea8;
+  --accent: #f4a259; --focus: #8fb3ff; --warn: #f0b429;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { color-scheme: light; --bg: #eef1f6; --panel: #ffffff; --line: #d3d8e4; --line-strong: #7a8299; --fg: #121726; --fg-2: #4a5268; --muted: #5c647d; --accent: #a8520a; --focus: #2f5fd0; --warn: #a86b00; }
+}
+:root[data-theme="light"] { color-scheme: light; --bg: #eef1f6; --panel: #ffffff; --line: #d3d8e4; --line-strong: #7a8299; --fg: #121726; --fg-2: #4a5268; --muted: #5c647d; --accent: #a8520a; --focus: #2f5fd0; --warn: #a86b00; }
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 1.0625rem; line-height: 1.6; }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2 { font-family: var(--font-display); margin: 0; line-height: 1.15; text-wrap: balance; letter-spacing: -0.01em; }
+p { margin: 0; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.top { display: flex; align-items: center; justify-content: space-between; padding-block: 18px; }
+.mark { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; min-height: 40px; }
+.mark i { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.lang { display: flex; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px; }
+.lang button { font: 600 0.85rem var(--font-mono); letter-spacing: 0.06em; color: var(--fg-2); background: none; border: 0; min-width: 44px; min-height: 36px; border-radius: 999px; cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--panel); color: var(--fg); }
+main { padding-block: 8px 48px; display: grid; gap: 32px; }
+h1 { font-size: clamp(2rem, 6vw, 2.8rem); font-weight: 800; }
+.updated { margin-top: 8px; color: var(--muted); font-size: 0.95rem; }
+section { display: grid; gap: 12px; }
+section h2 { font-size: clamp(1.3rem, 3.4vw, 1.6rem); font-weight: 700; padding-top: 20px; border-top: 1px solid var(--line); }
+section p, section li { color: var(--fg-2); }
+section b { color: var(--fg); font-weight: 600; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.todo { border-color: var(--warn); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.93rem; }
+th, td { text-align: left; padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; color: var(--fg); }
+thead th { border-top: 0; font: 600 0.76rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-2); }
+footer { border-top: 1px solid var(--line); padding-block: 22px 36px; display: grid; gap: 8px; font-size: 0.95rem; color: var(--fg-2); }
+/* phones: each table row becomes a card, with the column name above each value */
+@media (max-width: 640px) {
+  .tbl { overflow: visible; border: 0; background: none; }
+  table { min-width: 0; }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  tbody, tr, td { display: block; }
+  tr { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 6px 0; margin-bottom: 10px; }
+  td { border-top: 0; padding: 6px 14px; }
+  td::before { content: attr(data-label); display: block; font: 600 0.72rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-2); margin-bottom: 2px; }
+}
+</style>
+
+<header class="top wrap">
+  <a class="mark" href="index.html"><i aria-hidden="true"></i>Adia</a>
+  <div class="lang" role="group" aria-label="Limba / Language">
+    <button type="button" id="lang-ro" data-lang="ro" aria-pressed="true">RO</button>
+    <button type="button" id="lang-en" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<main class="wrap" id="content"></main>
+
+<footer class="wrap">
+  <p id="site-line"></p>
+</footer>
+
+<script src="site.js"></script>
+<script>
+const UPDATED = "2026-11-20";
+const T = {
+  ro: {
+    pageTitle: "Confidențialitate · Adia",
+    title: "Confidențialitate",
+    updated: "Actualizat la 20 noiembrie 2026",
+    who: (op, mail) => `<p>Site-ul Adia (pagina „Aerul de lângă tine”, lista de așteptare și alertele de smog) este administrat de <b>${op}</b>, care decide ce date se colectează și de ce (operatorul datelor, în sensul GDPR). Pentru orice întrebare sau cerere despre datele tale, scrie la ${mail}.</p>`,
+    missing: "[se completează înainte de lansare]",
+    s: [
+      ["Pe scurt", [
+        "<ul><li>Pe site: fără cookie-uri, fără reclame și fără programe de urmărire.</li><li>Locația ta nu pleacă din telefon.</li><li>Adresa de e-mail ne-o dai doar dacă vrei, și o folosim doar după ce o confirmi din e-mailul pe care ți-l trimitem.</li><li>Te poți dezabona oricând, dintr-un clic.</li></ul>",
+      ]],
+      ["Ce date colectăm, de ce și cât timp", [
+        `<div class="tbl"><table><thead><tr><th scope="col">Ce</th><th scope="col">De ce</th><th scope="col">Temeiul legal</th><th scope="col">Cât timp</th></tr></thead><tbody>
+          <tr><td>Adresa de e-mail, orașul pentru alerte, ce ai bifat în formular (alerte, vestea lansării, ce te interesează), data înscrierii și a confirmării</td><td>Ca să-ți trimitem vestea lansării, rar întrebări despre testul prototipului și, dacă le-ai cerut, alertele de smog</td><td>Consimțământul tău (art. 6 alin. (1) lit. a din GDPR), pe care îl poți retrage oricând</td><td>Până te dezabonezi sau ne ceri ștergerea. Dacă Adia nu s-a lansat, ștergem lista de așteptare cel târziu la 2 ani de la înscriere.</td></tr>
+          <tr><td>Răspunsul opțional despre preț, versiunea paginii pe care ai văzut-o, de unde ai venit (de exemplu „instagram”, din link), limba</td><td>Ca să înțelegem ce mesaje și ce preț îi interesează pe oameni. În analize folosim doar totaluri.</td><td>Consimțământul tău, dat când trimiți formularul</td><td>Cel mult 2 ani</td></tr>
+          <tr><td>Date tehnice: adresa IP, tipul de browser, pagina cerută, ora</td><td>Ca site-ul să funcționeze și să fie apărat de abuzuri, inclusiv filtrul de spam al formularelor</td><td>Interesul legitim de a ține site-ul sigur (art. 6 alin. (1) lit. f din GDPR)</td><td>Cât le păstrează furnizorul de găzduire în jurnalele lui, de obicei câteva zile sau săptămâni</td></tr>
+        </tbody></table></div>`,
+      ]],
+      ["Ce nu colectăm", [
+        "<ul><li><b>Locația.</b> Dacă apeși „Folosește locația mea”, browserul o dă doar paginii, în telefonul tău. Pagina descarcă datele pentru tot orașul și alege singură punctul cel mai apropiat; locația nu e trimisă nicăieri.</li><li><b>Cookie-uri sau statistici de vizită.</b> Nu folosim niciun instrument de analiză și nicio rețea de reclame.</li><li><b>Fonturi sau scripturi de la alte firme.</b> Totul se încarcă de pe site-ul nostru.</li></ul>",
+        "<p>Browserul tău păstrează două preferințe pe care le alegi tu: limba și zona din „Aerul de lângă tine”. Rămân pe dispozitivul tău, nu ni le trimite și le poți șterge din setările browserului.</p>",
+      ]],
+      ["Cine mai primește datele", [
+        "<p>Folosim doi furnizori, care prelucrează datele doar la cererea noastră, pe bază de contract:</p>",
+        "<ul><li><b>Netlify, Inc.</b> (SUA): găzduiește site-ul și primește formularele. Transferul în SUA se face cu garanțiile cerute de GDPR (Cadrul UE-SUA privind protecția datelor sau clauzele contractuale standard). Netlify filtrează automat formularele de spam.</li><li><b>Brevo</b> (Sendinblue SAS, Franța): păstrează lista de e-mailuri și trimite e-mailul de confirmare, alertele și vestea lansării. Ca majoritatea serviciilor de e-mail, Brevo numără câte e-mailuri sunt deschise și pe ce linkuri se apasă; noi ne uităm doar la totaluri.</li></ul>",
+        "<p>Nu vindem datele și nu le dăm nimănui altcuiva.</p>",
+      ]],
+      ["Drepturile tale", [
+        "<p>Ai dreptul să afli ce date avem despre tine, să le corectezi, să le ștergi, să restrângi folosirea lor, să le primești într-un format pe care îl poți duce în altă parte și să te opui folosirii lor. Îți poți retrage consimțământul oricând, cu linkul de dezabonare din orice e-mail sau scriindu-ne. Răspundem în cel mult o lună.</p>",
+        "<p>Dacă crezi că folosim greșit datele tale, poți depune o plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (<a href=\"https://www.dataprotection.ro\" target=\"_blank\" rel=\"noopener\">dataprotection.ro</a>).</p>",
+        "<p>Nu luăm decizii automate despre tine și nu îți facem un profil.</p>",
+      ]],
+      ["Schimbări", [
+        "<p>Dacă schimbăm ceva important, actualizăm data de mai sus și, dacă ești pe listă, îți scriem.</p>",
+      ]],
+    ],
+    todo: "Atenție: numele administratorului și adresa de contact nu sunt încă completate (în site.js).",
+  },
+  en: {
+    pageTitle: "Privacy · Adia",
+    title: "Privacy",
+    updated: "Updated on 20 November 2026",
+    who: (op, mail) => `<p>The Adia site (the “air near you” page, the waitlist and the smog alerts) is run by <b>${op}</b>, who decides which data is collected and why (the data controller under the GDPR). For any question or request about your data, write to ${mail}.</p>`,
+    missing: "[added before launch]",
+    s: [
+      ["In short", [
+        "<ul><li>On the site: no cookies, no ads and no tracking tools.</li><li>Your location never leaves your phone.</li><li>You give us your email address only if you want to, and we use it only after you confirm it from the email we send you.</li><li>You can unsubscribe at any time, in one click.</li></ul>",
+      ]],
+      ["What we collect, why and for how long", [
+        `<div class="tbl"><table><thead><tr><th scope="col">What</th><th scope="col">Why</th><th scope="col">Legal basis</th><th scope="col">How long</th></tr></thead><tbody>
+          <tr><td>Your email address, the city for alerts, what you ticked in the form (alerts, launch news, what interests you), the date you signed up and confirmed</td><td>To send you the launch news, occasional questions about the prototype test and, if you asked for them, the smog alerts</td><td>Your consent (GDPR Art. 6(1)(a)), which you can withdraw at any time</td><td>Until you unsubscribe or ask us to delete it. If Adia hasn't launched, we delete the waitlist at the latest 2 years after you signed up.</td></tr>
+          <tr><td>The optional price answer, which version of the page you saw, where you came from (for example “instagram”, from the link), the language</td><td>To understand which messages and which price interest people. Our analyses only use totals.</td><td>Your consent, given when you send the form</td><td>At most 2 years</td></tr>
+          <tr><td>Technical data: IP address, browser type, the page requested, the time</td><td>To keep the site working and protected from abuse, including the forms' spam filter</td><td>Our legitimate interest in keeping the site secure (GDPR Art. 6(1)(f))</td><td>As long as the hosting provider keeps them in its logs, usually a few days or weeks</td></tr>
+        </tbody></table></div>`,
+      ]],
+      ["What we don't collect", [
+        "<ul><li><b>Your location.</b> If you tap “Use my location”, the browser gives it only to the page, on your phone. The page downloads the data for the whole city and picks the nearest point itself; your location isn't sent anywhere.</li><li><b>Cookies or visit statistics.</b> We use no analytics tool and no ad network.</li><li><b>Fonts or scripts from other companies.</b> Everything loads from our own site.</li></ul>",
+        "<p>Your browser keeps two preferences that you choose: the language and the area on “The air near you”. They stay on your device, aren't sent to us, and you can delete them in your browser settings.</p>",
+      ]],
+      ["Who else receives the data", [
+        "<p>We use two providers, who process the data only on our instructions, under contract:</p>",
+        "<ul><li><b>Netlify, Inc.</b> (USA): hosts the site and receives the forms. The transfer to the USA uses the safeguards the GDPR requires (the EU-US Data Privacy Framework or standard contractual clauses). Netlify filters the forms for spam automatically.</li><li><b>Brevo</b> (Sendinblue SAS, France): keeps the email list and sends the confirmation email, the alerts and the launch news. Like most email services, Brevo counts how many emails are opened and which links are clicked; we only look at the totals.</li></ul>",
+        "<p>We don't sell the data and don't give it to anyone else.</p>",
+      ]],
+      ["Your rights", [
+        "<p>You have the right to know what data we hold about you, to correct it, to delete it, to restrict its use, to receive it in a format you can take elsewhere, and to object to its use. You can withdraw your consent at any time, with the unsubscribe link in any email or by writing to us. We reply within one month.</p>",
+        "<p>If you think we misuse your data, you can complain to Romania's data protection authority, ANSPDCP (<a href=\"https://www.dataprotection.ro\" target=\"_blank\" rel=\"noopener\">dataprotection.ro</a>).</p>",
+        "<p>We make no automated decisions about you and don't build a profile of you.</p>",
+      ]],
+      ["Changes", [
+        "<p>If we change anything important, we update the date above and, if you're on the list, we email you.</p>",
+      ]],
+    ],
+    todo: "Note: the operator's name and contact address haven't been filled in yet (in site.js).",
+  },
+};
+
+let lang = "ro";
+const $ = id => document.getElementById(id);
+const esc = AC.esc;
+
+function render() {
+  const L = T[lang], S = window.SITE || {};
+  const op = S.operator ? esc(S.operator) : L.missing;
+  const mail = S.contact && AC.emailOk(S.contact) ? `<a href="mailto:${esc(S.contact)}">${esc(S.contact)}</a>` : L.missing;
+  $("content").innerHTML =
+    `<div><h1>${esc(L.title)}</h1><p class="updated"><time datetime="${UPDATED}">${esc(L.updated)}</time></p></div>` +
+    (S.operator && S.contact ? "" : `<p class="box todo" role="note">${esc(L.todo)}</p>`) +
+    `<section class="box">${L.who(op, mail)}</section>` +
+    L.s.map(([h, parts], i) => `<section aria-labelledby="s${i}"><h2 id="s${i}">${esc(h)}</h2>${parts.join("")}</section>`).join("");
+  labelCells();
+}
+function labelCells() {   // the column names, shown above each value when the table is stacked on phones
+  document.querySelectorAll(".tbl table").forEach(t => {
+    const hs = [...t.querySelectorAll("thead th")].map(th => th.textContent);
+    t.querySelectorAll("tbody tr").forEach(tr => [...tr.children].forEach((td, i) => td.setAttribute("data-label", hs[i] || "")));
+  });
+}
+
+function setLang(l, save) {
+  lang = l;
+  document.documentElement.lang = l;
+  document.title = T[l].pageTitle;
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === l)));
+  $("site-line").innerHTML = AC.siteLine(l);
+  render();
+  AC.carry();
+  if (save) {
+    AC.store.set("adia-lang", l);
+    try { if (location.hash === "#en" || location.hash === "#ro") history.replaceState(null, "", "#" + l); } catch (e) {}
+  }
+}
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang, true)));
+
+let start = AC.store.get("adia-lang") || "ro";
+if (location.hash === "#en" || location.hash === "#ro") start = location.hash.slice(1);
+setLang(T[start] ? start : "ro", false);
+</script>
